@@ -4,7 +4,7 @@ import logging
 from html import escape
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
-from emoji import emojize
+from emoji.core import emojize
 from pyrogram import Client, Filters
 from pyrogram.errors import BadRequest
 
@@ -91,7 +91,7 @@ def _welcome(client, update, member=None):
         return
 
     # Use default message if there's no custom one set
-    welcome_text = 'Hello $username! Welcome to $title %s' % emojize(':grinning_face:')
+    welcome_text = 'Hello $username! Welcome to $title %s' % emojize(':grinning:')
     if text_group:
         text = welcome_text + '\n' + text_group
     else:
@@ -127,7 +127,7 @@ def _introduce(client, update):
     text = 'Hello %s! I will now greet anyone who joins this chat with a' \
            ' nice message %s \nCheck the /help command for more info!' \
            % (update.chat.title,
-              emojize(':grinning_face:'))
+              emojize(':grinning:'))
     update.reply_text(text=text, quote=False, parse_mode='html')
 
 

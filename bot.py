@@ -91,7 +91,7 @@ def _welcome(client, update, member=None):
         return
 
     # Use default message if there's no custom one set
-    welcome_text = 'Hello $username! Welcome to $title %s' % emojize(':grinning_face:')
+    welcome_text = 'Hello $username! Welcome to $title %s' % emojize(':grinning:')
     if text_group:
         text = welcome_text + '\n' + text_group
     else:
