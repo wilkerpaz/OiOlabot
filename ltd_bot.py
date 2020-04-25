@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 logging.getLogger('apscheduler').setLevel(logging.WARNING)
 logging.getLogger('pyrogram').setLevel(logging.WARNING)
 
-My_Bot = config('OiOlabot')
-Token = config('TOKEN')
+My_Bot = config('LiturgiaDiariabot')
+Token = config('TOKEN_LD')
 
-db = DatabaseHandler(0)
+db = DatabaseHandler(2)
 app = Client(session_name=My_Bot, bot_token=Token)
 
 

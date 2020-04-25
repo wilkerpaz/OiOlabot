@@ -1,6 +1,6 @@
 *.idea/
 *config.ini
-*.session
+*.session*
 *service.sh
 
 # Byte-compiled / optimized / DLL files
