@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 logging.getLogger('apscheduler').setLevel(logging.WARNING)
 logging.getLogger('pyrogram').setLevel(logging.WARNING)
 
-My_Bot = config('OiOlabot')
+My_Bot = config('MyBot')
 Token = config('TOKEN')
 
 db = DatabaseHandler(0)

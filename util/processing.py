@@ -3,7 +3,7 @@ import threading
 
 from multiprocessing.dummy import Pool
 
-from pyrogram.errors import PeerIdInvalid, FloodWait
+from pyrogram.errors import PeerIdInvalid, FloodWait, ChannelInvalid
 
 from util.datehandler import DateHandler
 from util.feedhandler import FeedHandler
@@ -84,15 +84,12 @@ class BatchProcess(threading.Thread):
                         self.bot.send_message(chat_id=int(chat), text=message, parse_mode='html')
                         return None
                     except PeerIdInvalid as error:
-                        logger.info('Error send message for chat_id {}' % chat)
+                        logger.info('Error send message for chat_id ' + chat)
                         print('TelegramError', error, chat)
-                        message = "Something went wrong when I tried to parse the URL: \n\n " + \
-                                  url + "\n\nCould you please check that for me? " \
-                                        "Remove the url from your subscriptions using the " \
-                                        "/remove command, it seems like it does not work anymore!"
-
-                        self.bot.send_message(chat_id=int(chat_id), text=message, parse_mode='html')
                     except FloodWait as error:
+                        print(error, chat_id)
+
+                    except ChannelInvalid as error:
                         print(error, chat_id)
 
     def error(self, chat_id, error):
