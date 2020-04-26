@@ -91,7 +91,7 @@ def _welcome(client, update, member=None):
         return
 
     # Use default message if there's no custom one set
-    welcome_text = 'Hello $username! Welcome to $title %s' % emojize(':smile:')
+    welcome_text = 'Hello $username! Welcome to $title %s' % emojize(':grinning_face:')
     if text_group:
         text = welcome_text + '\n' + text_group
     else:
@@ -127,7 +127,7 @@ def _introduce(client, update):
     text = 'Hello %s! I will now greet anyone who joins this chat with a' \
            ' nice message %s \nCheck the /help command for more info!' \
            % (update.chat.title,
-              emojize(':smile:'))
+              emojize(':grinning_face:'))
     update.reply_text(text=text, quote=False, parse_mode='html')
 
 
