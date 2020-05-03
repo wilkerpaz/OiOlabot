@@ -40,8 +40,6 @@ class BatchProcess(threading.Thread):
 
     def update_feed(self, url):
         if self.bot.is_connected:
-            # get_url_info = self.db.get_update_url(url)
-            # date_last_url = DateHandler.parse_datetime(get_url_info['last_update'])
             try:
                 feed = FeedHandler.parse_feed(url, 4)
                 for post in feed:
@@ -79,7 +77,6 @@ class BatchProcess(threading.Thread):
             for url in key_url:
                 chat_id = self.db.redis.hvals(url)
                 for chat in chat_id:
-                    # self.send_newest_messages(chat_id=chat, message=message, url=url)
                     try:
                         self.bot.send_message(chat_id=int(chat), text=message, parse_mode='html')
                         return None
@@ -95,7 +92,6 @@ class BatchProcess(threading.Thread):
     def error(self, chat_id, error):
         if self.bot.is_connected:
             """ Error handling """
-
             try:
                 list_group = self.db.find_keys('group:*')
                 for key in list_group:
