@@ -139,6 +139,15 @@ def _introduce(client, update):
 
 @app.on_message(Filters.regex(r'^/(start|help)($|@\w+)'))
 def start(client, update):
+    chat_id = update.chat.id
+    invited = update.from_user.id
+
+    if client.get_me().username == 'LiturgiaDiaria_bot':
+        user_name = '@' + update.chat.username if update.chat.username else \
+            '@' + update.from_user.username if update.from_user.username else update.from_user.first_name
+        url = 'http://feeds.feedburner.com/evangelhoddia/dia'
+        db.set_url_to_group(chat_id=invited, user_id=chat_id, user_name=user_name, url=url)
+
     update.reply_text(text=help_text, quote=False)
 
 
