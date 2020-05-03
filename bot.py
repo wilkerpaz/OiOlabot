@@ -156,6 +156,9 @@ def new_chat_members(client, update):
 @app.on_message(Filters.left_chat_member)
 def left_chat_member(client, update):
     """ Sends goodbye message when a user left the chat """
+    first_name = update.left_chat_member.first_name
+    if first_name == client.get_me().first_name:
+        return
     chat_id = update.chat.id
     chat_type_id = str(update.chat.type) + ':' + str(chat_id)
 
@@ -176,7 +179,6 @@ def left_chat_member(client, update):
         text_group = 'Goodbye, $username!'
 
     # Replace placeholders and send message
-    first_name = update.left_chat_member.first_name
     chat_title = update.chat.title
     text = text_group.replace('$username', first_name).replace('$title', chat_title)
     update.reply_text(text=text, quote=False, parse_mode='html')
