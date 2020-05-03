@@ -130,11 +130,10 @@ def _introduce(client, update):
               emojize(':grinning_face:'))
     update.reply_text(text=text, quote=False, parse_mode='html')
 
-    logger.info('Start bot  (%s)' % client.get_me().username)
     if client.get_me().username == 'LiturgiaDiaria_bot':
-        user_name = '@' + update.from_user.username if update.from_user.username else update.from_user.first_name
+        user_name = '@' + update.chat.username if update.chat.username else \
+            '@' + update.from_user.username if update.from_user.username else update.from_user.first_name
         url = 'http://feeds.feedburner.com/evangelhoddia/dia'
-        print(invited, chat_id, user_name, url)
         db.set_url_to_group(chat_id=invited, user_id=chat_id, user_name=user_name, url=url)
 
 
