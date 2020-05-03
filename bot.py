@@ -108,7 +108,7 @@ def _introduce(client, update):
     Introduces the bot to a chat its been added to and saves the user id of the
     user who invited us.
     """
-    chat_id = update.from_user.id
+    chat_id = update.chat.id
     chat_title = update.chat.title
     chat_name = '@' + update.chat.username
 
