@@ -9,14 +9,14 @@ class DateHandler:
     @staticmethod
     def get_datetime_now():
         # Strip seconds from datetime
-        datestring = str(
+        date_string = str(
             datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
-        naive_date = datetime.datetime.utcnow().strptime(datestring, "%Y-%m-%d %H:%M:%S")
+        naive_date = datetime.datetime.utcnow().strptime(date_string, "%Y-%m-%d %H:%M:%S")
 
         # Make datetime aware of timezone
         aware_date = pytz.utc.localize(naive_date)
         result = aware_date.astimezone(pytz.timezone("America/Belem"))
-        return naive_date
+        return result
 
     @staticmethod
     def parse_datetime(date_time):

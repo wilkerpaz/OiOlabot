@@ -29,12 +29,25 @@ class FeedHandler(object):
         return feed
 
     @staticmethod
+    def format_url_string(string):
+        """
+        Formats a given url as string so it matches http(s)://adress.domain.
+        This should be called before parsing the url, to make sure it is parsable
+        """
+
+        url_pattern = re.compile(r"(http(s?)):\/\/.*")
+        if not url_pattern.match(string):
+            string = "http://" + string
+
+        return string
+
+    @staticmethod
     def is_parsable(url):
         """
         Checks wether the given url provides a news feed. Return True if news are available, else False
         """
 
-        url_pattern = re.compile("((http(s?))):\/\/.*")
+        url_pattern = re.compile(r"((http(s?))):\/\/.*")
         if not url_pattern.match(url):
             return False
 
@@ -48,18 +61,3 @@ class FeedHandler(object):
             if hasattr(post, "published") or hasattr(post, 'summary'):
                 return True
         return True
-
-    @staticmethod
-    def format_url_string(string):
-        """
-        Formats a given url as string so it matches http(s)://adress.domain.
-        This should be called before parsing the url, to make sure it is parsable
-        """
-
-        # string = string.lower()
-
-        url_pattern = re.compile("((http(s?))):\/\/.*")
-        if not url_pattern.match(string):
-            string = "http://" + string
-
-        return string
