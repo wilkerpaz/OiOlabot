@@ -16,7 +16,7 @@ LOG = config('LOG')
 logging.basicConfig(level=LOG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 logging.getLogger('apscheduler').setLevel(logging.WARNING)
-logging.getLogger('pyrogram').setLevel(logging.WARNING)
+logging.getLogger('OiOlaBot').setLevel(logging.WARNING)
 
 My_Bot = config('MyBot')
 Token = config('TOKEN')
