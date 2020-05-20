@@ -3,7 +3,7 @@ import threading
 
 from multiprocessing.dummy import Pool
 
-from pyrogram.errors import PeerIdInvalid, FloodWait, ChannelInvalid
+from pyrogram.errors import PeerIdInvalid, FloodWait, ChannelInvalid, UserIsBlocked
 
 from util.datehandler import DateHandler
 from util.feedhandler import FeedHandler
@@ -87,6 +87,10 @@ class BatchProcess(threading.Thread):
                         print(error, chat_id)
 
                     except ChannelInvalid as error:
+                        logger.info('Error send message for chat_id ' + str(chat_id))
+                        print(error, chat_id)
+
+                    except UserIsBlocked as error:
                         logger.info('Error send message for chat_id ' + str(chat_id))
                         print(error, chat_id)
 
