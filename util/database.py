@@ -1,4 +1,7 @@
 from redis import StrictRedis
+from decouple import config
+
+password = config('REDIS')
 
 
 class DatabaseHandler(object):
@@ -7,7 +10,7 @@ class DatabaseHandler(object):
 
         self.redis = StrictRedis(host='localhost',
                                  port=6379,
-                                 # password='password',
+                                 password=password,
                                  charset='utf-8',
                                  decode_responses=True,
                                  db=db
