@@ -84,15 +84,15 @@ class BatchProcess(threading.Thread):
                         logger.info('Error send message for chat_id ' + chat)
                         print('TelegramError', error, chat)
                     except FloodWait as error:
-                        print(error, chat_id)
+                        print(error, chat)
 
                     except ChannelInvalid as error:
-                        logger.info('Error send message for chat_id ' + str(chat_id))
-                        print(error, chat_id)
+                        logger.info('Error send message for chat_id ' + str(chat))
+                        print(error, chat)
 
                     except UserIsBlocked as error:
-                        logger.info('Error send message for chat_id ' + str(chat_id))
-                        print(error, chat_id)
+                        logger.info('Error send message for chat_id ' + str(chat))
+                        print(error, chat)
 
     def error(self, chat_id, error):
         if self.bot.is_connected:
