@@ -23,7 +23,7 @@ class BatchProcess(threading.Thread):
     def run(self):
         if self.bot.is_connected:
             urls = self.db.get_urls()
-            self.parse_parallel(urls=urls, threads=10)
+            self.parse_parallel(urls=urls, threads=4)
 
     def parse_parallel(self, urls, threads):
         if self.bot.is_connected:
