@@ -569,7 +569,7 @@ if __name__ == '__main__':
     loop_parse()
 
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(loop_parse, 'interval', seconds=45, id='feed', replace_existing=True, max_instances=10)
+    scheduler.add_job(loop_parse, 'interval', seconds=45, id='feed', replace_existing=True, max_instances=4)
     scheduler.start()
     print('Press Ctrl+{0} to exit'.format('C'))
 
