@@ -143,11 +143,11 @@ def start(client, update):
     invited = update.from_user.id
 
     if client.get_me().username == 'LiturgiaDiaria_bot':
-        print(client.get_me().username)
+        # print(client.get_me().username)
         user_name = '@' + update.chat.username if update.chat.username else \
             '@' + update.from_user.username if update.from_user.username else update.from_user.first_name
         url = 'http://feeds.feedburner.com/evangelhoddia/dia'
-        print(invited, chat_id, user_name, url)
+        # print(invited, chat_id, user_name, url)
         db.set_url_to_group(chat_id=invited, user_id=chat_id, user_name=user_name, url=url)
 
     update.reply_text(text=help_text, quote=False)
@@ -314,7 +314,7 @@ def get_user(client, update):
         except BadRequest as e:
             text = "Sorry, " + first_name + "! I already have that url with stored in your subscriptions."
             update.reply_text(text=text, parse_mode='html')
-            print(user_input, e)
+            # print(user_input, e)
             return None
 
     get_chat = get_chat if get_chat else client.get_chat(user_id)
@@ -559,7 +559,8 @@ def message_text_group(client, update):
 
 @app.on_message()
 def all_update(client, update):
-    print(update)
+    pass
+    # print(update)
 
 
 if __name__ == '__main__':

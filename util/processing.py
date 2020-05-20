@@ -87,6 +87,7 @@ class BatchProcess(threading.Thread):
                         print(error, chat_id)
 
                     except ChannelInvalid as error:
+                        logger.info('Error send message for chat_id ' + str(chat_id))
                         print(error, chat_id)
 
     def error(self, chat_id, error):
