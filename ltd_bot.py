@@ -571,6 +571,7 @@ if __name__ == '__main__':
     scheduler = AsyncIOScheduler()
     scheduler.add_job(loop_parse, 'interval', seconds=45, id='feed', replace_existing=True, max_instances=4)
     scheduler.start()
+    logger.critical('Press Ctrl+%s to exit' % 'C')
     print('Press Ctrl+{0} to exit'.format('C'))
 
     # Execution will block here until Ctrl+C is pressed.
