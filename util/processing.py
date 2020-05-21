@@ -1,4 +1,7 @@
 import logging
+import threading
+
+from multiprocessing.dummy import Pool
 
 from pyrogram.errors import PeerIdInvalid, FloodWait, ChannelInvalid, UserIsBlocked
 
@@ -9,9 +12,11 @@ logger = logging.getLogger(__name__)
 logging.getLogger('processing').setLevel(logging.INFO)
 
 
-class BatchProcess(object):
+class BatchProcess(threading.Thread):
 
     def __init__(self, database, bot):
+        threading.Thread.__init__(self)
+
         self.db = database
         self.bot = bot
         self.run()
@@ -24,8 +29,10 @@ class BatchProcess(object):
     def parse_parallel(self, urls, threads):
         if self.bot.is_connected:
             time_started = DateHandler.datetime.now()
-            for url in urls:
-                self.update_feed(url)
+            pool = Pool(threads)
+            pool.map(self.update_feed, urls)
+            pool.close()
+            pool.join()
 
             time_ended = DateHandler.datetime.now()
             duration = time_ended - time_started
