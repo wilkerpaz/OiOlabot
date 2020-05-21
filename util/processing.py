@@ -1,7 +1,5 @@
 import logging
 
-#from multiprocessing.dummy import Pool
-
 from pyrogram.errors import PeerIdInvalid, FloodWait, ChannelInvalid, UserIsBlocked
 
 from util.datehandler import DateHandler
@@ -27,11 +25,7 @@ class BatchProcess(object):
         if self.bot.is_connected:
             time_started = DateHandler.datetime.now()
             for url in urls:
-                self.update_feed(urls)
-            # pool = Pool(threads)
-            # pool.map(self.update_feed, urls)
-            # pool.close()
-            # pool.join()
+                self.update_feed(url)
 
             time_ended = DateHandler.datetime.now()
             duration = time_ended - time_started
