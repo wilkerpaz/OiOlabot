@@ -38,8 +38,7 @@ def loop_parse():
 
 @app.on_message(Filters.command("backup"))
 def send_redis_db(client, update=None):
-    print(update.chat.id, type(update.chat.id), CHAT_ID, type(CHAT_ID))
-    if update is None or update.chat.id == CHAT_ID:
+    if update is None or str(update.chat.id) == str(CHAT_ID):
         client.send_document(CHAT_ID, "/home/wilker/dump.rdb")
 
 
