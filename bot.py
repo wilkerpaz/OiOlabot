@@ -583,7 +583,7 @@ if __name__ == '__main__':
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(loop_parse, trigger='interval', seconds=60, id='feed', replace_existing=True, max_instances=4)
-    scheduler.add_job(loop_parse, trigger='interval', start_date=date, day=1, id='backup', replace_existing=True)
+    scheduler.add_job(send_redis_db(app), trigger='interval', start_date=date, day=1, id='backup', replace_existing=True)
     scheduler.start()
     logger.critical('Press Ctrl+%s to exit' % 'C')
     print('Press Ctrl+{0} to exit'.format('C'))
