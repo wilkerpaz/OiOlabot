@@ -558,13 +558,12 @@ def other_command(client, update):
 
 @app.on_message(Filters.text and Filters.group)
 def message_text_group(client, update):
-    return
+    pass
 
 
 @app.on_message()
 def all_update(client, update):
     pass
-    # print(update)
 
 
 if __name__ == '__main__':
@@ -572,7 +571,7 @@ if __name__ == '__main__':
     loop_parse()
 
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(loop_parse, 'interval', seconds=45, id='feed', replace_existing=True, max_instances=4)
+    scheduler.add_job(loop_parse, 'interval', seconds=60, id='feed', replace_existing=True, max_instances=4)
     scheduler.start()
     logger.critical('Press Ctrl+%s to exit' % 'C')
     print('Press Ctrl+{0} to exit'.format('C'))
