@@ -39,7 +39,7 @@ def loop_parse():
 @app.on_message(Filters.command("backup"))
 def send_redis_db(client, update=None):
     if update is None or update.chat.id == CHAT_ID:
-        client.send_document(CHAT_ID, "~/dump.rdb")
+        client.send_document(CHAT_ID, "/home/wilker/dump.rdb")
 
 
 help_text = 'Welcomes everyone that enters a group chat that this bot is a ' \
