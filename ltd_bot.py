@@ -424,8 +424,8 @@ def list_url(client, update):
         text = '<code>/removeurl ' + url + '</code>'
         try:
             update.reply_text(text=text, quote=False, parse_mode='html')
-        except FloodWait as e:
-            print(e)
+        except FloodWait:
+            pass
 
 
 def all_url(client, update):
