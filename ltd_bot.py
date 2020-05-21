@@ -13,7 +13,8 @@ from util.feedhandler import FeedHandler
 from util.processing import BatchProcess
 
 LOG = config('LOG')
-logging.basicConfig(level=LOG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# logging.basicConfig(level=LOG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 logging.getLogger('pyrogram').setLevel(logging.WARNING)
 logging.getLogger('apscheduler').setLevel(logging.WARNING)
