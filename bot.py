@@ -37,7 +37,8 @@ def loop_parse():
 
 
 @app.on_message(Filters.command("backup"))
-def backup_redis(client, update=None):
+def backup_redis(client=None, update=None):
+    client = client if client else app
     if update is None or str(update.chat.id) == str(CHAT_ID):
         client.send_document(CHAT_ID, "/home/wilker/dump.rdb")
 
@@ -583,7 +584,7 @@ if __name__ == '__main__':
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(loop_parse, trigger='interval', seconds=60, id='feed', replace_existing=True, max_instances=4)
-    scheduler.add_job(backup_redis(app), trigger='interval', days=1, start_date=date, id='backup')
+    scheduler.add_job(backup_redis, trigger='interval', days=1, start_date=date, id='backup')
     scheduler.start()
     logger.critical('Press Ctrl+%s to exit' % 'C')
     print('Press Ctrl+{0} to exit'.format('C'))
