@@ -579,7 +579,7 @@ if __name__ == '__main__':
     app.start()
     loop_parse()
 
-    date = datetime.combine(datetime.today(), datetime.min.time())
+    date = str(datetime.combine(datetime.today(), datetime.min.time()))
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(loop_parse, trigger='interval', seconds=60, id='feed', replace_existing=True, max_instances=4)
