@@ -6,7 +6,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
 from emoji import emojize
 from pyrogram import Client, Filters
-from pyrogram.errors import BadRequest
+from pyrogram.errors import BadRequest, FloodWait
 
 from util.database import DatabaseHandler
 from util.feedhandler import FeedHandler
@@ -422,7 +422,10 @@ def list_url(client, update):
     for url in urls:
         url = (url['chat_name'] + ' ' if int(url['chat_id']) < 0 else '') + url['url']
         text = '<code>/removeurl ' + url + '</code>'
-        update.reply_text(text=text, quote=False, parse_mode='html')
+        try:
+            update.reply_text(text=text, quote=False, parse_mode='html')
+        except FloodWait as e:
+            print(e)
 
 
 def all_url(client, update):
