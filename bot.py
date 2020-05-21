@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from html import escape
+from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
 from emoji import emojize
@@ -13,6 +14,7 @@ from util.feedhandler import FeedHandler
 from util.processing import BatchProcess
 
 LOG = config('LOG')
+CHAT_ID = config('CHAT_ID')
 # logging.basicConfig(level=LOG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -32,6 +34,12 @@ def loop_parse():
         scheduler.remove_job('feed')
     else:
         BatchProcess(database=db, bot=app)
+
+
+@app.on_message(Filters.command("backup"))
+def send_redis_db(client, update=None):
+    if update is None or update.chat.id == CHAT_ID:
+        client.send_document(CHAT_ID, "~/dump.rdb")
 
 
 help_text = 'Welcomes everyone that enters a group chat that this bot is a ' \
@@ -571,8 +579,11 @@ if __name__ == '__main__':
     app.start()
     loop_parse()
 
+    date = datetime.combine(datetime.today(), datetime.min.time())
+
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(loop_parse, 'interval', seconds=60, id='feed', replace_existing=True, max_instances=4)
+    scheduler.add_job(loop_parse, trigger='interval', seconds=60, id='feed', replace_existing=True, max_instances=4)
+    scheduler.add_job(loop_parse, trigger='interval', start_date=date, day=1, id='backup', replace_existing=True)
     scheduler.start()
     logger.critical('Press Ctrl+%s to exit' % 'C')
     print('Press Ctrl+{0} to exit'.format('C'))
