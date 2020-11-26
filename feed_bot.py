@@ -16,10 +16,10 @@ DB = config('DB')
 BOT_NAME = config('BOT_NAME')
 API_TOKEN = config('DEV_TOKEN')  # Tokens do Bot de Desenvolvimento
 
-logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level='INFO', format='%(name)s - %(levelname)s - %(message)s')
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 bot = telebot.TeleBot(API_TOKEN)
 db = DatabaseHandler(DB)
