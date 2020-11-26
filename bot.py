@@ -205,7 +205,7 @@ _________________________________________________
 async def start(client, update):
     """ Prints help text """
     me = await client.get_me()
-    if me.username == BOT_NAME_TD:
+    if me.username == BOT_NAME_LD:
         _set_daily_liturgy(client, update)
         return
 
