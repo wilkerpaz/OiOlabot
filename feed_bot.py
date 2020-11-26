@@ -28,7 +28,6 @@ db = DatabaseHandler(DB)
 
 def parse_parallel():
     time_started = DateHandler.datetime.now()
-    print(time_started)
     urls = db.get_urls_activated()
     threads = len(urls)
     pool = ThreadPool(threads)
@@ -102,6 +101,4 @@ def errors(chat_id, url):
 
 
 if __name__ == "__main__":
-    while True:
-        parse_parallel()
-        sleep(10)
+    parse_parallel()

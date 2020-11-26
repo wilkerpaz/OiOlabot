@@ -10,9 +10,11 @@ from util.database import DatabaseHandler
 from util.feedhandler import FeedHandler
 
 LOG = config('LOG')
-BOT_NAME = config('BOT_NAME')
+DB = config('DB_LD')
+BOT_NAME = config('BOT_NAME_LD')
 BOT_NAME_TD = config('BOT_NAME_LD')
-logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
+API_TOKEN = config('DEV_TOKEN_LD')  # Tokens do Bot de Desenvolvimento
+ADMINS = config('CHAT_ID')
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
@@ -27,12 +29,6 @@ _________________________________________________
 
 '''
 
-ADMINS = ['26072030']  # Escreva a ID do seu Usuáro no telegram
-USER_ADMINS = []
-
-DB = config('DB')
-BOT_NAME_LD = config('BOT_NAME_LD')
-API_TOKEN = config('DEV_TOKEN')  # Tokens do Bot de Desenvolvimento
 
 help_text = 'Welcomes everyone that enters a group chat that this bot is a ' \
             'part of. By default, only the person who invited the bot into ' \
