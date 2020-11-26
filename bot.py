@@ -355,7 +355,7 @@ def get_chat_by_username(client, update, user_name=None):
 
 @bot.on_message(filters.regex(r'^/me(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def get_user_info(client, update):
-    command = str(update.matches[0][0][1:].split('@', 1)[0]).strip()
+    command = str(update.matches[0][0][1:].split('@', 1)[0]).strip().split(' ')[0]
     args = update.matches[0]['text'] if update.matches else None
 
     if args:
@@ -625,4 +625,5 @@ if __name__ == "__main__":
 
     except RPCError as _:
         error(_)
+        logger.critical(f'{_}')
         print(_)

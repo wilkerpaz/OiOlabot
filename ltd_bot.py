@@ -16,10 +16,10 @@ BOT_NAME_LD = config('BOT_NAME_LD')
 API_TOKEN = config('DEV_TOKEN_LD')  # Tokens do Bot de Desenvolvimento
 ADMINS = config('CHAT_ID')
 
-logging.basicConfig(level='INFO', format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.ERROR)
 
 help_text = 'Welcomes everyone that enters a group chat that this bot is a ' \
             'part of. By default, only the person who invited the bot into ' \
@@ -355,7 +355,7 @@ def get_chat_by_username(client, update, user_name=None):
 
 @bot.on_message(filters.regex(r'^/me(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def get_user_info(client, update):
-    command = str(update.matches[0][0][1:].split('@', 1)[0]).strip()
+    command = str(update.matches[0][0][1:].split('@', 1)[0]).strip().split(' ')[0]
     args = update.matches[0]['text'] if update.matches else None
 
     if args:
@@ -611,9 +611,9 @@ def error(_):
     logger.error(f"def error {_}")
 
 
-@bot.on_message()
-def all_update(_, update):
-    print(update)
+# @bot.on_message()
+# def all_update(_, update):
+#     print(update)
 
 
 # Start Bot
