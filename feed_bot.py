@@ -16,6 +16,8 @@ DB = config('DB')
 BOT_NAME = config('BOT_NAME')
 API_TOKEN = config('DEV_TOKEN')  # Tokens do Bot de Desenvolvimento
 
+THREADS = config('THREADS')
+
 logging.basicConfig(level='INFO', format='%(name)s - %(levelname)s - %(message)s')
 
 logger = logging.getLogger(__name__)
@@ -28,7 +30,7 @@ db = DatabaseHandler(DB)
 def parse_parallel():
     time_started = DateHandler.datetime.now()
     urls = db.get_urls_activated()
-    threads = 3
+    threads = THREADS
     pool = ThreadPool(threads)
     pool.map(update_feed, urls)
     pool.close()
