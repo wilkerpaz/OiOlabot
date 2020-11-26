@@ -463,7 +463,27 @@ def list_url(client, update):
     for url in urls:
         url = (str(url['chat_name']) + ' ' if url['chat_name'] and int(url['chat_id']) < 0 else '') + url['url']
         text = '<code>/removeurl ' + url + '</code>'
-        # update.reply_text(message)
+        update.reply_text(text=text, quote=False, parse_mode='html')
+
+
+@bot.on_message(filters.regex(r'^/(deactivatedurl)(\s|$|@\w+)'))
+def list_url_deactivated(client, update):
+    """
+    Displays a list of all user subscriptions
+    """
+    chat_id = update.chat.id
+
+    # _check admin privilege and group context
+    if chat_id < 0:
+        if not _check(client, update):
+            return
+
+    text = "Here is a list of all name deactivated"
+    update.reply_text(text=text, quote=False, parse_mode='html')
+
+    urls = db.get_names_for_user_activated()
+    for url in urls:
+        text = '<code>/removekey ' + url + '</code>'
         update.reply_text(text=text, quote=False, parse_mode='html')
 
 

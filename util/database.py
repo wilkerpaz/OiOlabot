@@ -155,15 +155,15 @@ class DatabaseHandler(object):
         active_keys = sorted(set([name for name in names if not self.get_value_name_key(name, 'disable') == 'True']))
         return self.extract_url_from_names(active_keys)
 
+    '''return all url activated'''
+    def get_urls_deactivated(self):
+        names = self._find('user_url*')
+        return sorted(set([name for name in names if not self.get_value_name_key(name, 'disable') == 'False']))
+
     '''return names for key 'disable' = 'True' from url'''
     def get_names_for_user_activated(self, url):
         names = self._find('user_url*' + url + '*')
-
-        # name = 'user_url:26072030:chat_id:26072030:^http://g1.globo.com/dynamo/economia/rss2.xml^'
-        # print(self.get_value_name_key(name, 'disable') == 'False')
-
-        active_names = sorted(set([name for name in names if self.get_value_name_key(name, 'disable') == 'False']))
-        return active_names
+        return sorted(set([name for name in names if self.get_value_name_key(name, 'disable') == 'False']))
 
     '''return all url activated'''
 
@@ -182,10 +182,9 @@ class DatabaseHandler(object):
         mapping = {'disable': 'True'}
         disables = [self.set_name_key(name=name, mapping=mapping) for name in names] if names else []
         return disables
-        # return [disable[1] for disable in disables if disable[0]]
 
+    '''del url for chat'''
     def del_url_for_chat(self, chat_id, url):
         names = self._find('user_url:*' + str(chat_id) + '*' + url + '*')
         result = self.del_names(names)
         return True if result[0] == 1 else None
-
