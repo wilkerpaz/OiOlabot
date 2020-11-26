@@ -12,7 +12,7 @@ class FeedHandler(object):
         """
         Parses the given url, returns a list containing all available entries
         """
-        time_started = DateHandler.datetime.now()
+        # time_started = DateHandler.datetime.now()
         try:
             if 1 <= entries <= 10:
                 feeds = feedparser.parse(url, modified=modified).entries[:entries]
@@ -35,9 +35,10 @@ class FeedHandler(object):
         except exceptions.__all__ as e:
             print(e)
         finally:
-            time_ended = DateHandler.datetime.now()
-            duration = time_ended - time_started
-            print(url, duration)
+            return
+            # time_ended = DateHandler.datetime.now()
+            # duration = time_ended - time_started
+            # print(url, duration)
 
     @staticmethod
     def format_url_string(string):
