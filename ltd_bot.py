@@ -63,7 +63,7 @@ help_text = help_text + help_text_feed
 
 # def _check(client, update, override_lock=None):
 
-async def _check(_, update, override_lock=None):
+def _check(_, update, override_lock=None):
     """
     Perform some hecks on the update. If checks were successful, returns True,
     else sends an error message to the chat and returns False.
@@ -73,7 +73,7 @@ async def _check(_, update, override_lock=None):
 
     if chat_id > 0:
         text = 'Please add me to a group first!'
-        await update.reply_text(chat_id=chat_id, text=text)
+        update.reply_text(chat_id=chat_id, text=text)
         return False
 
     locked = override_lock if override_lock is not None \
@@ -82,7 +82,7 @@ async def _check(_, update, override_lock=None):
     if locked and int(db.get_value_name_key('group:' + str(chat_id), 'chat_adm')) != user_id:
         if not bool(db.get_value_name_key('group:' + str(chat_id), 'chat_quiet')):
             text = 'Sorry, only the person who invited me can do that.'
-            await update.reply_text(chat_id=chat_id, text=text)
+            update.reply_text(chat_id=chat_id, text=text)
         return False
 
     return True
