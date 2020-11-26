@@ -89,7 +89,7 @@ def _check(_, update, override_lock=None):
 
 
 # Welcome a user to the chat
-def _welcome(_, update, member=None):
+def _welcome(update, member=None):
     """ Welcomes a user to the chat """
     chat_id = update.chat.id
     chat_title = update.chat.title
