@@ -481,7 +481,7 @@ def list_url_deactivated(client, update):
     text = "Here is a list of all name deactivated"
     update.reply_text(text=text, quote=False, parse_mode='html')
 
-    urls = db.get_names_for_user_activated()
+    urls = db.get_urls_deactivated()
     for url in urls:
         text = '<code>/removekey ' + url + '</code>'
         update.reply_text(text=text, quote=False, parse_mode='html')
