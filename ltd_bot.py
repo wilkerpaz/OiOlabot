@@ -21,17 +21,6 @@ logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 
-# =================================
-
-
-'''
--------------------------------------------------
-==============  Variáveis Globais  ==============
-_________________________________________________
-
-'''
-
-
 help_text = 'Welcomes everyone that enters a group chat that this bot is a ' \
             'part of. By default, only the person who invited the bot into ' \
             'the group is able to change settings.\nCommands:\n\n' \
@@ -54,29 +43,10 @@ help_text = 'Welcomes everyone that enters a group chat that this bot is a ' \
             "/start - Activates the bot. If you have subscribed to RSS feeds, you will receive news from now on\n " \
             "/stop - Deactivates the bot. You won't receive any messages from the bot until you activate the bot again \
             using the start comand\n"
-'''
------------------------------------------------------------
-======  Objetos Principais e Instâncias de Classes ========
-___________________________________________________________
-'''
-
-# --------- Objeto do Bot ---------
 
 bot = Client(session_name=BOT_NAME, bot_token=API_TOKEN)
 db = DatabaseHandler(DB)
 
-'''
------------------------------------------------------------
-======  Rotas do Flask                             ========
-___________________________________________________________
-'''
-
-'''
--------------------------------------------------
-==============  Funções Internas  ===============
-_________________________________________________
-
-'''
 help_text_feed = "RSS Management\n" \
                  "/addurl <url> - Adds a util subscription to your list. or\n" \
                  "/addurl @chanel <url> - Add url in Your chanel to receve feed. or\n" \
@@ -186,26 +156,11 @@ def _set_daily_liturgy(_, update):
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
 
 
-'''
--------------------------------------------------
-==============  Funções De Interação   ==========
-_________________________________________________
-
-'''
-
-'''
--------------------------------------------------
-================== Comandos =====================
-_________________________________________________
-
-'''
-
-
 @bot.on_message(filters.regex(r'^/(start|help)($|@\w+)'))
-async def start(client, update):
+def start(client, update):
     """ Prints help text """
-    me = await client.get_me()
-    if me.username == BOT_NAME_LD:
+    me = client.get_me()
+    if me.username == '@' + BOT_NAME_LD:
         _set_daily_liturgy(client, update)
         return
 
@@ -214,7 +169,7 @@ async def start(client, update):
 
     if not bool(db.get_value_name_key('group:' + str(chat_id), 'chat_quiet')) \
             or str(db.get_value_name_key('group:' + str(chat_id), 'chat_adm')) == str(from_user):
-        await update.reply_text(text=help_text, quote=False, parse_mode='MARKDOWN', disable_web_page_preview=True)
+        update.reply_text(text=help_text, quote=False, parse_mode='MARKDOWN', disable_web_page_preview=True)
 
 
 @bot.on_message(filters.new_chat_members)
@@ -415,34 +370,6 @@ def get_user_info(client, update):
 
         if text and command == 'me':
             update.reply_text(text=text, quote=False, parse_mode='html')
-
-
-# def get_id(update):
-#     args = update.text.strip()[update.entities[0].length + 1:].split(' ')[0] if update.entities else None
-#     from_user = update.from_user
-#     chat_id = update.chat.id
-#
-#     if str(args)[:1] == '@':
-#         id_user = args
-#
-#     elif not str(args).find('/') < 0:
-#         id_user = '@' + str(args).split('/')[-1]
-#     else:
-#         id_user = '@' + str(args)
-#     try:
-#         get_id_user = bot.get_chat(chat_id=id_user)
-#     except telebot.apihelper.ApiException as e:
-#         error(e)
-#         return None
-#
-#     if get_id_user:
-#         return {'user_id': get_id_user['id'], 'user_name': "@" + str(get_id_user['username'])}
-#
-#     else:
-#         text = "Sorry, " + from_user.first_name + \
-#                "! I already have that group name " + id_user + " with stored in your subscriptions."
-#         envia_texto(bot=bot, chat_id=chat_id, text=text)
-#         return None
 
 
 def feed_url(update, url, **chat_info):
@@ -683,19 +610,6 @@ def error(_):
     """ Error handling """
     logger.error(f"def error {_}")
 
-
-'''
--------------------------------------------------
-================   Entradas   ===================
-_________________________________________________
-
-'''
-
-'''
------------------------------------------------------------
-======  Funções Finais                             ========
-___________________________________________________________
-'''
 
 # @bot.on_message()
 # def all_update(_, update):
