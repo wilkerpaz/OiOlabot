@@ -83,11 +83,14 @@ def send_newest_messages(text, url):
     for name in names_url:
         chat_id = int(db.get_value_name_key(name, 'chat_id'))
         if chat_id:
-            result = bot.send_message(chat_id=chat_id, text=text, parse_mode='html')
-            if not result:
-                errors(chat_id=chat_id, url=url)
-            else:
-                is_update_url = True
+            try:
+                result = bot.send_message(chat_id=chat_id, text=text, parse_mode='html')
+                if not result:
+                    errors(chat_id=chat_id, url=url)
+                else:
+                    is_update_url = True
+            except telebot.apihelper.ApiException as e:
+                errors(chat_id, url)
     return is_update_url
 
 
