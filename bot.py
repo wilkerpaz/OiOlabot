@@ -26,8 +26,8 @@ help_text = 'Welcomes everyone that enters a group chat that this bot is a ' \
             'the group is able to change settings.\nCommands:\n\n' \
             '/welcome - Set welcome message\n' \
             '/goodbye - Set goodbye message\n' \
-            '/disable\\_welcome - Disable the goodbye message\n' \
-            '/disable\\_goodbye - Disable the goodbye message\n' \
+            '/disable_welcome - Disable the goodbye message\n' \
+            '/disable_goodbye - Disable the goodbye message\n' \
             '/lock - Only the person who invited the bot can change messages\n' \
             '/unlock - Everyone can change messages\n' \
             '/quiet - Disable "Sorry, only the person who..." ' \
