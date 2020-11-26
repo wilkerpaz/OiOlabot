@@ -1,5 +1,8 @@
 import feedparser
+from feedparser import exceptions
 import re
+
+from util.datehandler import DateHandler
 
 
 class FeedHandler(object):
@@ -9,24 +12,32 @@ class FeedHandler(object):
         """
         Parses the given url, returns a list containing all available entries
         """
-        if 1 <= entries <= 10:
-            feeds = feedparser.parse(url, modified=modified).entries[:entries]
-            if url == 'http://feeds.feedburner.com/evangelhoddia/dia':
-                for f in feeds:
-                    f['published'] = f['id'][:10] + ' ' + '06:00:00'
-                    f['link'] = f['link'] + f['id'][:10]
-                    f['daily_liturgy'] = f['summary']
-                feeds.reverse()
-                return feeds
+        time_started = DateHandler.datetime.now()
+        try:
+            if 1 <= entries <= 10:
+                feeds = feedparser.parse(url, modified=modified).entries[:entries]
+                if url == 'http://feeds.feedburner.com/evangelhoddia/dia':
+                    for f in feeds:
+                        f['published'] = f['id'][:10] + ' ' + '06:00:00'
+                        f['link'] = f['link'] + f['id'][:10]
+                        f['daily_liturgy'] = f['summary']
+                    feeds.reverse()
+                    return feeds
+                else:
+                    feed = feeds[:entries]
+                    feed.reverse()
+                    return feed
             else:
-                feed = feeds[:entries]
-                feed.reverse()
-                return feed
-        else:
-            feed = feedparser.parse(url, modified=modified).entries[:4]
+                feed = feedparser.parse(url, modified=modified).entries[:4]
 
-        feed.reverse()
-        return feed
+            feed.reverse()
+            return feed
+        except exceptions.__all__ as e:
+            print(e)
+        finally:
+            time_ended = DateHandler.datetime.now()
+            duration = time_ended - time_started
+            print(url, duration)
 
     @staticmethod
     def format_url_string(string):
