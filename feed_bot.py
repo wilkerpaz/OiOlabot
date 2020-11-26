@@ -30,7 +30,7 @@ db = DatabaseHandler(DB)
 def parse_parallel():
     time_started = DateHandler.datetime.now()
     urls = db.get_urls_activated()
-    threads = THREADS
+    threads = 2
     pool = ThreadPool(threads)
     pool.map(update_feed, urls)
     pool.close()
