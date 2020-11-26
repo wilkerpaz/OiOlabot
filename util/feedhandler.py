@@ -35,7 +35,7 @@ class FeedHandler(object):
         except exceptions.__all__ as e:
             print(e)
         finally:
-            return
+            pass
             # time_ended = DateHandler.datetime.now()
             # duration = time_ended - time_started
             # print(url, duration)
