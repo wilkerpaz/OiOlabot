@@ -1,6 +1,7 @@
 import logging
 from datetime import timedelta
 from multiprocessing.dummy import Pool as ThreadPool
+from time import sleep
 
 import telebot
 from decouple import config
@@ -12,9 +13,9 @@ from util.feedhandler import FeedHandler
 ADMINS = config('CHAT_ID')
 
 LOG = config('LOG')
-DB = config('DB')
-BOT_NAME = config('BOT_NAME')
-API_TOKEN = config('DEV_TOKEN')  # Tokens do Bot de Desenvolvimento
+DB = config('DB_LD')
+BOT_NAME = config('BOT_NAME_LD')
+API_TOKEN = config('DEV_TOKEN_LD')  # Tokens do Bot de Desenvolvimento
 
 logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
 
