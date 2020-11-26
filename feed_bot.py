@@ -66,8 +66,10 @@ def update_feed(url):
                     update_url(url=url, last_update=date_published, last_url=post.link)
             else:
                 pass
-    except TypeError as _:
+    except ValueError as _:
         logger.error(f"TypeError {url} {str(_)}")
+    # except TypeError as _:
+    #     logger.error(f"TypeError {url} {str(_)}")
 
 
 def update_url(url, last_update, last_url):
