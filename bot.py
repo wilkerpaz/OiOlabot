@@ -10,11 +10,13 @@ from util.database import DatabaseHandler
 from util.feedhandler import FeedHandler
 
 LOG = config('LOG')
-DB = config('DB_LD')
-BOT_NAME = config('BOT_NAME_LD')
+DB = config('DB')
+BOT_NAME = config('BOT_NAME')
 BOT_NAME_LD = config('BOT_NAME_LD')
-API_TOKEN = config('DEV_TOKEN_LD')  # Tokens do Bot de Desenvolvimento
+API_TOKEN = config('DEV_TOKEN')  # Tokens do Bot de Desenvolvimento
 ADMINS = config('CHAT_ID')
+
+logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
