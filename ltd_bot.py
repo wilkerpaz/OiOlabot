@@ -16,10 +16,10 @@ BOT_NAME_LD = config('BOT_NAME_LD')
 API_TOKEN = config('DEV_TOKEN_LD')  # Tokens do Bot de Desenvolvimento
 ADMINS = config('CHAT_ID')
 
-logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level='INFO', format='%(name)s - %(levelname)s - %(message)s')
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.INFO)
 
 help_text = 'Welcomes everyone that enters a group chat that this bot is a ' \
             'part of. By default, only the person who invited the bot into ' \
@@ -611,9 +611,9 @@ def error(_):
     logger.error(f"def error {_}")
 
 
-# @bot.on_message()
-# def all_update(_, update):
-#     print(update)
+@bot.on_message()
+def all_update(_, update):
+    print(update)
 
 
 # Start Bot
@@ -625,4 +625,5 @@ if __name__ == "__main__":
 
     except RPCError as _:
         error(_)
+        logger.critical(f'{_}')
         print(_)
