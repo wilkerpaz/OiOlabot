@@ -14,7 +14,7 @@ DB = config('DB')
 BOT_NAME = config('BOT_NAME')
 BOT_NAME_LD = config('BOT_NAME_LD')
 API_TOKEN = config('DEV_TOKEN')  # Tokens do Bot de Desenvolvimento
-ADMINS = config('CHAT_ID')
+ADMINS = list(config('CHAT_ID'))
 
 logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
 
