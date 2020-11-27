@@ -31,6 +31,7 @@ db = DatabaseHandler(DB)
 def backup():
     if db.backup():
         list_admins = db.list_admins()
+        print(list_admins)
         for chat_id in list_admins:
             bot.send_document(chat_id=chat_id, data=PATH_REDIS)
 
