@@ -29,9 +29,7 @@ db = DatabaseHandler(DB)
 
 
 def backup():
-    logger.info(f"Send backup for...")
     if db.backup():
-        logger.info(f"Send backup for...")
         list_admins = db.list_admins()
         for chat_id in list_admins:
             logger.info(f"Send backup for {chat_id}")

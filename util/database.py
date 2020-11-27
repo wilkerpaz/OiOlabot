@@ -225,7 +225,6 @@ class DatabaseHandler(object):
         last_backup = DateHandler.parse_datetime(last_backup)
         date_last_backup = DateHandler.date(last_backup)
         hour_last_backup = DateHandler.time(last_backup)
-        print(date_last_backup, DateHandler.date(now), date_last_backup < DateHandler.date(now))
         if date_last_backup < DateHandler.date(now):
             if hour_last_backup <= DateHandler.time(now):
                 mapping = {'last_backup': str(now)}
