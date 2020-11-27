@@ -467,69 +467,6 @@ def list_url(client, update):
         update.reply_text(text=text, quote=False, parse_mode='html')
 
 
-@bot.on_message(filters.regex(r'^/(deactivatedurl)(\s|$|@\w+)'))
-def list_url_deactivated(client, update):
-    """
-    Displays a list of all user subscriptions
-    """
-    chat_id = update.chat.id
-
-    # _check admin privilege and group context
-    if chat_id < 0:
-        if not _check(client, update):
-            return
-
-    text = "Here is a list of all name deactivated"
-    update.reply_text(text=text, quote=False, parse_mode='html')
-
-    urls = db.get_urls_deactivated()
-    for url in urls:
-        text = '<code>/removekey ' + url + '</code>'
-        update.reply_text(text=text, quote=False, parse_mode='html')
-
-
-@bot.on_message(filters.regex(r'^/(activateallurl)(\s|$|@\w+)'))
-def activate_all_urls(client, update):
-    """
-    Displays a list of all user subscriptions
-    """
-    chat_id = update.chat.id
-
-    # _check admin privilege and group context
-    if chat_id < 0:
-        if not _check(client, update):
-            return
-
-    db.activated_all_urls()
-    text = 'Got it!'
-    update.reply_text(text=text, quote=False, parse_mode='html')
-
-
-@bot.on_message(filters.regex(r'^/(allurl)(\s|$|@\w+)'))
-def all_url(client, update):
-    """
-    Displays a list of all user subscriptions
-    """
-    chat_id = update.chat.id
-
-    # _check admin privilege and group context
-    if chat_id < 0:
-        if not _check(client, update):
-            return
-
-    text = "Here is a list of all subscriptions I stored for you!"
-    update.reply_text(text=text, quote=False, parse_mode='html')
-
-    urls = db.get_urls_activated()
-    for url in urls:
-        last_update = db.get_update_url(url)
-        text = 'last_update: ' + last_update['last_update'] + '\n\n' \
-               + 'last_url: <code>' + last_update['last_url'] + '</code>\n\n' \
-               + 'url: <code>' + last_update['url'] + '</code>'
-
-        update.reply_text(text=text, quote=False, parse_mode='html')
-
-
 @bot.on_message(filters.regex(r'^/(removeurl)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def remove_url(client, update):
     """
@@ -587,9 +524,95 @@ def remove_url(client, update):
         db.del_names(names_url)
 
 
+@bot.on_message(filters.regex(r'^/(stop)(\s|$|@\w+)'))
+def stop(client, update):
+    """
+    Stops the bot from working
+    """
+    chat_id = update.chat.id
+
+    # _check admin privilege and group context
+    if chat_id < 0:
+        if not _check(client, update):
+            return
+
+    text = "Oh.. Okay, I will not send you any more news updates! " \
+           "If you change your mind and you want to receive messages " \
+           "from me again use /start command again!"
+    update.reply_text(text=text, quote=False, parse_mode='html')
+
+
+'''FUNÇÕES CONTRLE ADM BANCO DE DADOS'''
+
+
+@bot.on_message(filters.regex(r'^/(deactivatedurl)(\s|$|@\w+)'))
+def list_url_deactivated(_, update):
+    """
+    Displays a list of all user subscriptions
+    """
+    chat_id = update.chat.id
+
+    # _check admin privilege and group context
+    if chat_id not in ADMINS:
+        return
+
+    text = "Here is a list of all name deactivated"
+    update.reply_text(text=text, quote=False, parse_mode='html')
+
+    urls = db.get_urls_deactivated()
+    for url in urls:
+        text = '<code>/removekey ' + url + '</code>'
+        update.reply_text(text=text, quote=False, parse_mode='html')
+
+
+@bot.on_message(filters.regex(r'^/(activateallurl)(\s|$|@\w+)'))
+def activate_all_urls(_, update):
+    """
+    Displays a list of all user subscriptions
+    """
+    chat_id = update.chat.id
+
+    # _check admin privilege and group context
+    if chat_id not in ADMINS:
+        return
+
+    db.activated_all_urls()
+    text = 'Got it!'
+    update.reply_text(text=text, quote=False, parse_mode='html')
+
+
+@bot.on_message(filters.regex(r'^/(allurl)(\s|$|@\w+)'))
+def all_url(_, update):
+    """
+    Displays a list of all user subscriptions
+    """
+    chat_id = update.chat.id
+
+    # _check admin privilege and group context
+    if chat_id not in ADMINS:
+        return
+
+    text = "Here is a list of all subscriptions I stored for you!"
+    update.reply_text(text=text, quote=False, parse_mode='html')
+
+    urls = db.get_urls_activated()
+    for url in urls:
+        last_update = db.get_update_url(url)
+        text = 'last_update: ' + last_update['last_update'] + '\n\n' \
+               + 'last_url: <code>' + last_update['last_url'] + '</code>\n\n' \
+               + 'url: <code>' + last_update['url'] + '</code>'
+
+        update.reply_text(text=text, quote=False, parse_mode='html')
+
+
 @bot.on_message(filters.regex(r'^/(getkey)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def get_key(_, update):
     args = update.matches[0]['text'].strip().split(' ')
+    chat_id = update.chat.id
+
+    if chat_id not in ADMINS:
+        return
+
     if len(args) == 1:
         keys = db.find_names(args[0])
         for k in keys:
@@ -600,6 +623,10 @@ def get_key(_, update):
 @bot.on_message(filters.regex(r'^/(removekey)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def remove_key(_, update):
     args = update.matches[0]['text'].strip().split(' ')
+    chat_id = update.chat.id
+
+    if chat_id not in ADMINS:
+        return
     text = 'I removed '
     if len(args) == 1:
         key = args[0]
@@ -623,24 +650,6 @@ def owner(_, update):
 
     logger.info('Invited by %s to chat %d (%s)' % (user_id, chat_id, update.chat.title))
     text = 'Got it!'
-    update.reply_text(text=text, quote=False, parse_mode='html')
-
-
-@bot.on_message(filters.regex(r'^/(stop)(\s|$|@\w+)'))
-def stop(client, update):
-    """
-    Stops the bot from working
-    """
-    chat_id = update.chat.id
-
-    # _check admin privilege and group context
-    if chat_id < 0:
-        if not _check(client, update):
-            return
-
-    text = "Oh.. Okay, I will not send you any more news updates! " \
-           "If you change your mind and you want to receive messages " \
-           "from me again use /start command again!"
     update.reply_text(text=text, quote=False, parse_mode='html')
 
 
