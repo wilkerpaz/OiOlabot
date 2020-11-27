@@ -499,9 +499,6 @@ def activate_all_urls(client, update):
         if not _check(client, update):
             return
 
-    text = "Here is a list of all name deactivated"
-    update.reply_text(text=text, quote=False, parse_mode='html')
-
     db.activated_all_urls()
     text = 'Got it!'
     update.reply_text(text=text, quote=False, parse_mode='html')
