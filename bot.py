@@ -14,7 +14,6 @@ DB = config('DB')
 BOT_NAME = config('BOT_NAME')
 BOT_NAME_LD = config('BOT_NAME_LD')
 API_TOKEN = config('DEV_TOKEN')  # Tokens do Bot de Desenvolvimento
-ADMINS = list(config('CHAT_ID'))
 
 logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
 
@@ -553,7 +552,7 @@ def list_url_deactivated(_, update):
     chat_id = update.chat.id
 
     # _check admin privilege and group context
-    if chat_id not in ADMINS:
+    if str(chat_id) not in db.list_admins():
         return
 
     text = "Here is a list of all name deactivated"
@@ -573,7 +572,7 @@ def activate_all_urls(_, update):
     chat_id = update.chat.id
 
     # _check admin privilege and group context
-    if chat_id not in ADMINS:
+    if str(chat_id) not in db.list_admins():
         return
 
     db.activated_all_urls()
@@ -589,7 +588,7 @@ def all_url(_, update):
     chat_id = update.chat.id
 
     # _check admin privilege and group context
-    if chat_id not in ADMINS:
+    if str(chat_id) not in db.list_admins():
         return
 
     text = "Here is a list of all subscriptions I stored for you!"
@@ -610,7 +609,7 @@ def get_key(_, update):
     args = update.matches[0]['text'].strip().split(' ')
     chat_id = update.chat.id
 
-    if chat_id not in ADMINS:
+    if str(chat_id) not in db.list_admins():
         return
 
     if len(args) == 1:
@@ -625,7 +624,7 @@ def remove_key(_, update):
     args = update.matches[0]['text'].strip().split(' ')
     chat_id = update.chat.id
 
-    if chat_id not in ADMINS:
+    if str(chat_id) not in db.list_admins():
         return
     text = 'I removed '
     if len(args) == 1:

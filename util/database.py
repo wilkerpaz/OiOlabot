@@ -17,6 +17,7 @@ class DatabaseHandler(object):
                                  )
 
     '''find names for argument in data base '''
+
     def _find(self, search):
         cursor = None
         names = []
@@ -50,15 +51,18 @@ class DatabaseHandler(object):
         return keys if keys else None
 
     '''set a name and key on database'''
+
     def set_name_key(self, name, mapping: dict):
         self.redis.hset(name=name, mapping=mapping)
         return bool(self.exist_name(name))
 
     '''set a name and key on database'''
+
     def del_names(self, names: list):
         return [self.redis.delete(name) for name in names]
 
     '''check if group exist'''
+
     def exist_group(self, chat_id):
         name = 'group:' + str(chat_id)
         return self.exist_name(name)
@@ -72,6 +76,7 @@ class DatabaseHandler(object):
             self.redis.rename(name, name_update)
 
     '''register or update a url with las_url and last_update'''
+
     def update_group(self, chat_id, chat_name, chat_title, user_id, update_owner=None):
         name = 'group:' + str(chat_id)
         mapping = {'chat_adm': str(user_id),
@@ -86,22 +91,26 @@ class DatabaseHandler(object):
         return True if self.set_name_key(name=name, mapping=mapping) else False
 
     '''check if url exist'''
+
     def exist_url(self, url):
         name = 'url:^' + str(url) + '^'
         return self.exist_name(name)
 
     '''register or update a url with las_url and last_update'''
+
     def update_url(self, url, last_update='2000-01-01 00:00:00+00:00', last_url='http://www.exemplo.com'):
         name = 'url:^' + str(url) + '^'
         mapping = {'last_update': str(last_update), 'last_url': last_url}
         return True if self.set_name_key(name=name, mapping=mapping) else False
 
     '''check if url exist in chat'''
+
     def exist_url_to_chat(self, user_id, chat_id, url):
         name = 'user_url:' + str(user_id) + ':chat_id:' + str(chat_id) + ':^' + str(url) + '^'
         return self.exist_name(name)
 
     '''register a url for user or group'''
+
     def set_url_to_chat(self, chat_id, chat_name, url, user_id):
         name_url = self.exist_url(url)
         if not name_url:
@@ -116,6 +125,7 @@ class DatabaseHandler(object):
             return False
 
     '''extract url for name'''
+
     @staticmethod
     def extract_url_from_names(names):
         if names:
@@ -125,6 +135,7 @@ class DatabaseHandler(object):
         return ()
 
     '''return all url for a chat_id'''
+
     def get_chat_urls(self, user_id):
         names = self._find('user_url:' + str(user_id) + ':*')
         chat_urls = []
@@ -140,6 +151,7 @@ class DatabaseHandler(object):
         return chat_urls
 
     '''return info about last update url'''
+
     def get_update_url(self, url):
         name = 'url:^' + str(url) + '^'
         if self.exist_name(name):
@@ -150,17 +162,20 @@ class DatabaseHandler(object):
         return False
 
     '''return all url activated'''
+
     def get_urls_activated(self):
         names = self._find('user_url*')
         active_keys = sorted(set([name for name in names if not self.get_value_name_key(name, 'disable') == 'True']))
         return self.extract_url_from_names(active_keys)
 
     '''return all url deactivated'''
+
     def get_urls_deactivated(self):
         names = self._find('user_url*')
         return sorted(set([name for name in names if self.get_value_name_key(name, 'disable') == 'True']))
 
     '''activated all url'''
+
     def activated_all_urls(self):
         names = self._find('user_url*')
         for name in names:
@@ -168,6 +183,7 @@ class DatabaseHandler(object):
         return True
 
     '''return names for key 'disable' = 'True' from url'''
+
     def get_names_for_user_activated(self, url):
         names = self._find('user_url*' + url + '*')
         return sorted(set([name for name in names if self.get_value_name_key(name, 'disable') == 'False']))
@@ -184,6 +200,7 @@ class DatabaseHandler(object):
         return None
 
     '''disable url for chat'''
+
     def disable_url_chat(self, chat_id):
         names = self._find('user_url:*chat_id:' + str(chat_id) + '*')
         mapping = {'disable': 'True'}
@@ -191,7 +208,11 @@ class DatabaseHandler(object):
         return disables
 
     '''del url for chat'''
+
     def del_url_for_chat(self, chat_id, url):
         names = self._find('user_url:*' + str(chat_id) + '*' + url + '*')
         result = self.del_names(names)
         return True if result[0] == 1 else None
+
+    def list_admins(self):
+        return self.redis.lrange('admins', 0, self.redis.llen('admins'))
