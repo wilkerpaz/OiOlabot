@@ -155,10 +155,17 @@ class DatabaseHandler(object):
         active_keys = sorted(set([name for name in names if not self.get_value_name_key(name, 'disable') == 'True']))
         return self.extract_url_from_names(active_keys)
 
-    '''return all url activated'''
+    '''return all url deactivated'''
     def get_urls_deactivated(self):
         names = self._find('user_url*')
-        return sorted(set([name for name in names if not self.get_value_name_key(name, 'disable') == 'False']))
+        return sorted(set([name for name in names if self.get_value_name_key(name, 'disable') == 'True']))
+
+    '''activated all url'''
+    def activated_all_urls(self):
+        names = self._find('user_url*')
+        for name in names:
+            self.set_name_key(name, {'disable': 'False'})
+        return True
 
     '''return names for key 'disable' = 'True' from url'''
     def get_names_for_user_activated(self, url):

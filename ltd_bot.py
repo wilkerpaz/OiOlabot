@@ -487,6 +487,26 @@ def list_url_deactivated(client, update):
         update.reply_text(text=text, quote=False, parse_mode='html')
 
 
+@bot.on_message(filters.regex(r'^/(activateallurl)(\s|$|@\w+)'))
+def activate_all_urls(client, update):
+    """
+    Displays a list of all user subscriptions
+    """
+    chat_id = update.chat.id
+
+    # _check admin privilege and group context
+    if chat_id < 0:
+        if not _check(client, update):
+            return
+
+    text = "Here is a list of all name deactivated"
+    update.reply_text(text=text, quote=False, parse_mode='html')
+
+    db.activated_all_urls()
+    text = 'Got it!'
+    update.reply_text(text=text, quote=False, parse_mode='html')
+
+
 @bot.on_message(filters.regex(r'^/(allurl)(\s|$|@\w+)'))
 def all_url(client, update):
     """
