@@ -335,6 +335,7 @@ def get_chat_by_username(client, update, user_name=None):
         chat_id = update.chat.id if user_name == '@this' or not user_name else user_name
         get_chat = client.get_chat(chat_id=chat_id)
     except RPCError as _:
+
         if user_name:
             text = f'I cant resolved username {user_name}'
             update.reply_text(text=text, quote=False, parse_mode='html')
@@ -529,7 +530,7 @@ def all_url(client, update):
         update.reply_text(text=text, quote=False, parse_mode='html')
 
 
-@bot.on_message(filters.regex(r'^/(removeurl)(\s|$|@\w+)'))
+@bot.on_message(filters.regex(r'^/(removeurl)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def remove_url(client, update):
     """
     Removes an rss subscription from user
@@ -586,7 +587,7 @@ def remove_url(client, update):
         db.del_names(names_url)
 
 
-@bot.on_message(filters.regex(r'^/(getkey)(\s|$|@\w+)'))
+@bot.on_message(filters.regex(r'^/(getkey)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def get_key(_, update):
     args = update.matches[0]['text'].strip().split(' ')
     if len(args) == 1:
@@ -596,7 +597,7 @@ def get_key(_, update):
             update.reply_text(text=text, quote=False, parse_mode='html')
 
 
-@bot.on_message(filters.regex(r'^/(removekey)(\s|$|@\w+)'))
+@bot.on_message(filters.regex(r'^/(removekey)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def remove_key(_, update):
     args = update.matches[0]['text'].strip().split(' ')
     text = 'I removed '
