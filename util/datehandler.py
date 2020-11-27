@@ -30,20 +30,24 @@ class DateHandler:
 
     @staticmethod
     def date(date_time):
-        result = parser.parse(date_time)
+        if type(date_time) is str:
+            result = parser.parse(date_time)
 
-        if result.tzinfo is None:
-            aware_date = pytz.utc.localize(result)
-            result = aware_date.astimezone(pytz.timezone("America/Belem"))
-
+            if result.tzinfo is None:
+                aware_date = pytz.utc.localize(result)
+                result = aware_date.astimezone(pytz.timezone("America/Belem"))
+        else:
+            result = date_time
         return result.date()
 
     @staticmethod
     def time(date_time):
-        result = parser.parse(date_time)
+        if type(date_time) is str:
+            result = parser.parse(date_time)
 
-        if result.tzinfo is None:
-            aware_date = pytz.utc.localize(result)
-            result = aware_date.astimezone(pytz.timezone("America/Belem"))
-
+            if result.tzinfo is None:
+                aware_date = pytz.utc.localize(result)
+                result = aware_date.astimezone(pytz.timezone("America/Belem"))
+        else:
+            result = date_time
         return result.time()

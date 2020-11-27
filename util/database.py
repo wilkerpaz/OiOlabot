@@ -227,7 +227,8 @@ class DatabaseHandler(object):
         hour_last_backup = DateHandler.time(last_backup)
         if date_last_backup <= DateHandler.date(now):
             if hour_last_backup <= DateHandler.time(now):
-                self.set_name_key('backup', {'last_backup': now})
+                mapping = {'last_backup': str(now)}
+                self.set_name_key('backup', mapping=mapping)
                 self.redis.save()
                 return True
         else:
