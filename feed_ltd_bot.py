@@ -84,6 +84,7 @@ def send_newest_messages(text, url):
         chat_id = int(db.get_value_name_key(name, 'chat_id'))
         if chat_id:
             try:
+                text = text + '\nt.me/@' + BOT_NAME
                 result = bot.send_message(chat_id=chat_id, text=text, parse_mode='html')
                 if not result:
                     errors(chat_id=chat_id, url=url)
