@@ -27,3 +27,23 @@ class DateHandler:
             result = aware_date.astimezone(pytz.timezone("America/Belem"))
 
         return result
+
+    @staticmethod
+    def date(date_time):
+        result = parser.parse(date_time)
+
+        if result.tzinfo is None:
+            aware_date = pytz.utc.localize(result)
+            result = aware_date.astimezone(pytz.timezone("America/Belem"))
+
+        return result.date()
+
+    @staticmethod
+    def time(date_time):
+        result = parser.parse(date_time)
+
+        if result.tzinfo is None:
+            aware_date = pytz.utc.localize(result)
+            result = aware_date.astimezone(pytz.timezone("America/Belem"))
+
+        return result.time()

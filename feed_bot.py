@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 from multiprocessing.dummy import Pool as ThreadPool
 
 import telebot
@@ -17,6 +17,7 @@ BOT_NAME = config('BOT_NAME')
 API_TOKEN = config('DEV_TOKEN')  # Tokens do Bot de Desenvolvimento
 
 THREADS = config('THREADS')
+PATH_REDIS = config('PATH_REDIS')
 
 logging.basicConfig(level='INFO', format='%(name)s - %(levelname)s - %(message)s')
 
@@ -25,6 +26,13 @@ logger.setLevel(logging.INFO)
 
 bot = telebot.TeleBot(API_TOKEN)
 db = DatabaseHandler(DB)
+
+
+def backup():
+    if db.backup():
+        list_admins = db.list_admins()
+        for chat_id in list_admins:
+            bot.send_document(chat_id=chat_id, data=PATH_REDIS)
 
 
 def parse_parallel():
@@ -38,6 +46,7 @@ def parse_parallel():
     time_ended = DateHandler.datetime.now()
     duration = time_ended - time_started
     logger.info(f"Finished updating! Parsed {str(len(urls))} rss feeds in {str(duration)}! {BOT_NAME}")
+    backup()
     return True
 
 

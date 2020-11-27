@@ -1,6 +1,8 @@
 from redis import StrictRedis
 from decouple import config
 
+from util.datehandler import DateHandler
+
 password = config('REDIS')
 
 
@@ -216,3 +218,17 @@ class DatabaseHandler(object):
 
     def list_admins(self):
         return self.redis.lrange('admins', 0, self.redis.llen('admins'))
+
+    def backup(self):
+        now = DateHandler.get_datetime_now()
+        last_backup = self.get_value_name_key('backup', 'last_backup')
+        last_backup = DateHandler.parse_datetime(last_backup)
+        date_last_backup = DateHandler.date(last_backup)
+        hour_last_backup = DateHandler.time(last_backup)
+        if date_last_backup <= DateHandler.date(now):
+            if hour_last_backup <= DateHandler.time(now):
+                self.set_name_key('backup', {'last_backup': now})
+                self.redis.save()
+                return True
+        else:
+            return False

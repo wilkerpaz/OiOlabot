@@ -11,12 +11,11 @@ API_TOKEN = config('DEV_TOKEN')  # Tokens do Bot de Desenvolvimento
 
 
 def backup():
-    bot = telebot.TeleBot(API_TOKEN)
-    db = DatabaseHandler(DB)
-    db.redis.save()
-    list_admins = db.list_admins()
-    for chat_id in list_admins:
-        bot.send_document(chat_id=chat_id, data=PATH_REDIS)
+    if time(22, 10) <= datetime.now().time() <= time(22, 15):
+        db.redis.save()
+        list_admins = db.list_admins()
+        for chat_id in list_admins:
+            bot.send_document(chat_id=chat_id, data=PATH_REDIS)
 
 
 if __name__ == "__main__":
