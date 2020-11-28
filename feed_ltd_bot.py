@@ -1,7 +1,6 @@
 import logging
 from datetime import timedelta
 from multiprocessing.dummy import Pool as ThreadPool
-from time import sleep
 
 import telebot
 from decouple import config
@@ -9,8 +8,6 @@ from decouple import config
 from util.database import DatabaseHandler
 from util.datehandler import DateHandler
 from util.feedhandler import FeedHandler
-
-ADMINS = config('CHAT_ID')
 
 LOG = config('LOG')
 DB = config('DB_LD')

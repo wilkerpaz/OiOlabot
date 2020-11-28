@@ -9,8 +9,6 @@ from util.database import DatabaseHandler
 from util.datehandler import DateHandler
 from util.feedhandler import FeedHandler
 
-ADMINS = config('CHAT_ID')
-
 LOG = config('LOG')
 DB = config('DB')
 BOT_NAME = config('BOT_NAME')
@@ -97,6 +95,8 @@ def send_newest_messages(text, url, disable_page_preview=None):
             try:
                 # print(chat_id, url)
                 chat = bot.get_chat(chat_id=str(chat_id))
+                for admin in db.list_admins():
+                    bot.send_message(chat_id=str(admin), text=str(text) + '\n' + str(chat), disable_notification=True)
                 chat_username = chat.username if (chat.username and chat.type != 'private') else None
                 text = text + '\n\nt.me/' + (chat_username if chat_username else BOT_NAME)
                 result = bot.send_message(chat_id=chat_id, text=text, disable_web_page_preview=disable_page_preview)
