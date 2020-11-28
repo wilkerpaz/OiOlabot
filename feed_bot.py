@@ -67,13 +67,13 @@ def update_feed(url):
             if hasattr(post, "daily_liturgy"):
                 if date_published > date_last_url and post.link != last_url \
                         and post.daily_liturgy != '':
-                    message = post.title + '\n' + post.daily_liturgy
-                    result = send_newest_messages(text=message, url=url, disable_page_preview=True)
+                    text = post.title + '\n' + post.daily_liturgy
+                    result = send_newest_messages(text=text, url=url, disable_page_preview=True)
                     if post == feed[-1] and result:
                         update_url(url=url, last_update=date_published, last_url=post.link)
             elif date_published > date_last_url and post.link != last_url:
-                message = post.title + '\n' + post.link
-                result = send_newest_messages(message, url)
+                text = post.title + '\n' + post.link
+                result = send_newest_messages(text, url)
                 if result:
                     update_url(url=url, last_update=date_published, last_url=post.link)
             else:
@@ -90,15 +90,15 @@ def send_newest_messages(text, url, disable_page_preview=None):
     names_url = db.get_names_for_user_activated(url)
     is_update_url = False
     for name in names_url:
-        chat_id = int(db.get_value_name_key(name, 'chat_id'))
-        logger.info(f"Sending message for {chat_id}")
+        chat_id = db.get_value_name_key(name, 'chat_id')
+        logger.info(f"Sending message for {chat_id} {name}")
         if chat_id:
             try:
                 # print(chat_id, url)
                 chat = bot.get_chat(chat_id=str(chat_id))
                 chat_username = chat.username if (chat.username and chat.type != 'private') else None
-                chat_username = '\n\nt.me/' + (chat_username or BOT_NAME)
-                logger.info(f"Sending message for {chat_username}")
+                chat_username = 't.me/' + (chat_username or BOT_NAME)
+                logger.info(f"Sending message for {chat_id} {chat_username} {text}")
 
                 text = text + chat_username
                 # for admin in db.list_admins():
