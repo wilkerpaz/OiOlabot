@@ -24,7 +24,7 @@ logging.basicConfig(level='INFO', format='%(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-bot = telebot.TeleBot(API_TOKEN)
+bot = telebot.TeleBot(API_TOKEN, skip_pending=True)
 db = DatabaseHandler(DB)
 
 
