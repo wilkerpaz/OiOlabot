@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, time, timedelta
+from datetime import timedelta
 from multiprocessing.dummy import Pool as ThreadPool
 
 import telebot
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 bot = telebot.TeleBot(API_TOKEN, skip_pending=True)
+bot.stop_polling()
 db = DatabaseHandler(DB)
 
 
@@ -94,6 +95,7 @@ def send_newest_messages(text, url):
         chat_id = int(db.get_value_name_key(name, 'chat_id'))
         if chat_id:
             try:
+                # print(chat_id, url)
                 chat = bot.get_chat(chat_id=str(chat_id))
                 chat_username = chat.username if chat.type != 'private' and chat.username else None
                 text = text + '\n\nt.me/' + (chat_username if chat_username else BOT_NAME)
