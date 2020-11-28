@@ -32,8 +32,9 @@ def backup():
     if db.backup():
         list_admins = db.list_admins()
         for chat_id in list_admins:
-            logger.info(f"Send backup for {chat_id}")
-            bot.send_document(chat_id=chat_id, data=PATH_REDIS)
+            logger.info(f"Send backup {PATH_REDIS} for {chat_id}")
+            doc = open(PATH_REDIS, 'rb')
+            bot.send_document(chat_id=chat_id, data=doc)
 
 
 def parse_parallel():
