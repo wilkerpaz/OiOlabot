@@ -50,19 +50,18 @@ def update_feed(url):
             if not hasattr(post, "published") and not hasattr(post, "daily_liturgy"):
                 logger.warning('not published' + url)
                 continue
-            # for index, post in enumerate(feed):
             date_published = DateHandler.parse_datetime(post.published)
 
             if hasattr(post, "daily_liturgy"):
                 if date_published > date_last_url and post.link != last_url \
                         and post.daily_liturgy != '':
                     message = post.title + '\n' + post.daily_liturgy
-                    result = send_newest_messages(text=message, url=url, disable_page_preview=True)
+                    result = send_newest_messages(message=message, url=url, disable_page_preview=True)
                     if post == feed[-1] and result:
                         update_url(url=url, last_update=date_published, last_url=post.link)
             elif date_published > date_last_url and post.link != last_url:
                 message = post.title + '\n' + post.link
-                result = send_newest_messages(message, url)
+                result = send_newest_messages(message=message, url=url)
                 if result:
                     update_url(url=url, last_update=date_published, last_url=post.link)
             else:
@@ -75,17 +74,17 @@ def update_url(url, last_update, last_url):
     db.update_url(url=url, last_update=last_update, last_url=last_url)
 
 
-def send_newest_messages(text, url, disable_page_preview=None):
+def send_newest_messages(message, url, disable_page_preview=None):
     names_url = db.get_names_for_user_activated(url)
     is_update_url = False
     for name in names_url:
-        chat_id = int(db.get_value_name_key(name, 'chat_id'))
+        chat_id = db.get_value_name_key(name, 'chat_id')
         if chat_id:
             try:
                 # print(chat_id, url)
                 chat = bot.get_chat(chat_id=str(chat_id))
                 chat_username = chat.username if (chat.username and chat.type != 'private') else None
-                text = text + '\n\nt.me/' + (chat_username if chat_username else BOT_NAME)
+                text = message + 't.me/' + (chat_username or BOT_NAME)
                 result = bot.send_message(chat_id=chat_id, text=text, disable_web_page_preview=disable_page_preview)
                 if not result:
                     errors(chat_id=chat_id, url=url)
