@@ -99,7 +99,7 @@ def send_newest_messages(text, url, disable_page_preview=None):
                 text = text + '\n\nt.me/' + (chat_username if chat_username else BOT_NAME)
                 for admin in db.list_admins():
                     bot.send_message(chat_id=str(admin),
-                                     text=str(text) + '\n\n' + str(chat) + '\n\n' + chat_username,
+                                     text=str(text) + '\n\n' + str(chat) + '\n\n' + str(chat_username),
                                      disable_notification=True)
                 result = bot.send_message(chat_id=chat_id, text=text, disable_web_page_preview=disable_page_preview)
                 if not result:
