@@ -97,6 +97,7 @@ def send_newest_messages(text, url, disable_page_preview=None):
                 chat = bot.get_chat(chat_id=str(chat_id))
                 chat_username = chat.username if (chat.username and chat.type != 'private') else None
                 chat_username = chat_username or BOT_NAME
+                logger.info(f"Sending message for {chat_username}")
 
                 text = text + '\n\nt.me/' + chat_username
                 # for admin in db.list_admins():
