@@ -95,8 +95,8 @@ def send_newest_messages(text, url, disable_page_preview=None):
             try:
                 # print(chat_id, url)
                 chat = bot.get_chat(chat_id=str(chat_id))
-                chat_username = chat.username if (chat.username and chat.type != 'private') else None
-                text = text + '\n\nt.me/' + (chat_username if chat_username else BOT_NAME)
+                chat_username = chat.username if (chat.username and chat.type != 'private') else 'None'
+                text = text + '\n\nt.me/' + (chat_username if chat_username != 'None' else BOT_NAME)
                 for admin in db.list_admins():
                     bot.send_message(chat_id=str(admin),
                                      text=str(text) + '\n\n' + str(chat) + '\n\n' + str(chat_username),
