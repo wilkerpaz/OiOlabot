@@ -95,10 +95,12 @@ def send_newest_messages(text, url, disable_page_preview=None):
             try:
                 # print(chat_id, url)
                 chat = bot.get_chat(chat_id=str(chat_id))
-                for admin in db.list_admins():
-                    bot.send_message(chat_id=str(admin), text=str(text) + '\n' + str(chat), disable_notification=True)
                 chat_username = chat.username if (chat.username and chat.type != 'private') else None
                 text = text + '\n\nt.me/' + (chat_username if chat_username else BOT_NAME)
+                for admin in db.list_admins():
+                    bot.send_message(chat_id=str(admin),
+                                     text=str(text) + '\n\n' + str(chat) + '\n\n' + chat_username,
+                                     disable_notification=True)
                 result = bot.send_message(chat_id=chat_id, text=text, disable_web_page_preview=disable_page_preview)
                 if not result:
                     errors(chat_id=chat_id, url=url)
