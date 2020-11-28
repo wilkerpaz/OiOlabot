@@ -433,9 +433,9 @@ def add_url(client, update):
 
     else:
         url = args[0]
-        user_name = '@' + update.chat.username or None
-        first_name = update.from_user.first_name or None
-        chat_title = update.chat.title or None
+        user_name = ('@' + update.chat.username) if update.chat.username else None
+        chat_title = update.chat.title if update.chat.title else None
+        first_name = update.from_user.first_name if update.from_user.first_name else None
 
         chat_name = user_name or chat_title or first_name
         chat_info = {'chat_id': chat_id, 'chat_name': chat_name, 'user_id': user_id}
@@ -457,13 +457,13 @@ def list_url(client, update):
             return
 
     text = "Here is a list of all subscriptions I stored for you!"
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    client.send_message(chat_id=user_id, text=text, parse_mode='html')
 
     urls = db.get_chat_urls(user_id=user_id)
     for url in urls:
         url = (str(url['chat_name']) + ' ' if url['chat_name'] and int(url['chat_id']) < 0 else '') + url['url']
         text = '<code>/removeurl ' + url + '</code>'
-        update.reply_text(text=text, quote=False, parse_mode='html')
+        client.send_message(chat_id=user_id, text=text, parse_mode='html')
 
 
 @bot.on_message(filters.regex(r'^/(removeurl)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))

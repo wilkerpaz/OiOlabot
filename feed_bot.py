@@ -94,7 +94,9 @@ def send_newest_messages(text, url):
         chat_id = int(db.get_value_name_key(name, 'chat_id'))
         if chat_id:
             try:
-                text = text + '\n\nt.me/' + BOT_NAME
+                chat = bot.get_chat(chat_id=str(chat_id))
+                chat_username = chat.username if chat.type != 'private' and chat.username else None
+                text = text + '\n\nt.me/' + (chat_username if chat_username else BOT_NAME)
                 result = bot.send_message(chat_id=chat_id, text=text, parse_mode='html')
                 if not result:
                     errors(chat_id=chat_id, url=url)
