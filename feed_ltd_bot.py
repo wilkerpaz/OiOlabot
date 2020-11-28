@@ -84,7 +84,7 @@ def send_newest_messages(message, url, disable_page_preview=None):
                 # print(chat_id, url)
                 chat = bot.get_chat(chat_id=str(chat_id))
                 chat_username = chat.username if (chat.username and chat.type != 'private') else None
-                text = message + 't.me/' + (chat_username or BOT_NAME)
+                text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
                 result = bot.send_message(chat_id=chat_id, text=text, disable_web_page_preview=disable_page_preview)
                 if not result:
                     errors(chat_id=chat_id, url=url)
