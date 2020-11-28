@@ -599,7 +599,7 @@ def all_url(_, update):
         last_update = db.get_update_url(url)
         text = 'last_update: ' + last_update['last_update'] + '\n\n' \
                + 'last_url: <code>' + last_update['last_url'] + '</code>\n\n' \
-               + 'url: <code>' + last_update['url'] + '</code>'
+               + 'url: <code>' + url + '</code>'
 
         update.reply_text(text=text, quote=False, parse_mode='html')
 
