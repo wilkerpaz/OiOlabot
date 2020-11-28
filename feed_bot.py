@@ -90,28 +90,28 @@ def send_newest_messages(text, url, disable_page_preview=None):
     names_url = db.get_names_for_user_activated(url)
     is_update_url = False
     for name in names_url:
-        chat_ids = int(db.get_value_name_key(name, 'chat_id'))
-        if chat_ids:
-            for chat_id in chat_ids:
-                try:
-                    # print(chat_id, url)
-                    chat = bot.get_chat(chat_id=str(chat_id))
-                    chat_username = chat.username if (chat.username and chat.type != 'private') else None
-                    chat_username = '\n\nt.me/' + (chat_username or BOT_NAME)
-                    logger.info(f"Sending message for {chat_username}")
+        chat_id = int(db.get_value_name_key(name, 'chat_id'))
+        logger.info(f"Sending message for {chat_id}")
+        if chat_id:
+            try:
+                # print(chat_id, url)
+                chat = bot.get_chat(chat_id=str(chat_id))
+                chat_username = chat.username if (chat.username and chat.type != 'private') else None
+                chat_username = '\n\nt.me/' + (chat_username or BOT_NAME)
+                logger.info(f"Sending message for {chat_username}")
 
-                    text = text + chat_username
-                    # for admin in db.list_admins():
-                    #     bot.send_message(chat_id=str(admin),
-                    #                      text=str(text) + '\n\n' + str(chat) + '\n\n' + str(chat_username),
-                    #                      disable_notification=True)
-                    result = bot.send_message(chat_id=chat_id, text=text, disable_web_page_preview=disable_page_preview)
-                    if not result:
-                        errors(chat_id=chat_id, url=url)
-                    else:
-                        is_update_url = True
-                except telebot.apihelper.ApiException as _:
-                    errors(chat_id, url)
+                text = text + chat_username
+                # for admin in db.list_admins():
+                #     bot.send_message(chat_id=str(admin),
+                #                      text=str(text) + '\n\n' + str(chat) + '\n\n' + str(chat_username),
+                #                      disable_notification=True)
+                result = bot.send_message(chat_id=chat_id, text=text, disable_web_page_preview=disable_page_preview)
+                if not result:
+                    errors(chat_id=chat_id, url=url)
+                else:
+                    is_update_url = True
+            except telebot.apihelper.ApiException as _:
+                errors(chat_id, url)
     return is_update_url
 
 
