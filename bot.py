@@ -330,8 +330,8 @@ def command_control(client, update, command):
 def get_chat_by_username(client, update, user_name=None):
     try:
         if user_name:
-            user_name = user_name if user_name[0] == '@' else '@' + str(user_name).strip()
-        chat_id = update.chat.id if user_name == '@this' or not user_name else user_name
+            user_name = user_name if user_name[0] == '@' else '@' + str(user_name)
+        chat_id = update.chat.id if not user_name else user_name
         get_chat = client.get_chat(chat_id=chat_id)
     except RPCError as _:
 
@@ -421,8 +421,8 @@ def add_url(client, update):
         return
 
     elif len(args) == 2:
-        chat_name = args[0]
-        url = args[1]
+        chat_name = args[0].strip()
+        url = args[1].strip()
         chat_info = get_chat_by_username(update, chat_name)
         text = "I don't have access to chat " + chat_name + '\n' + text
         if chat_info is None:
