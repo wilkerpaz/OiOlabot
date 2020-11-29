@@ -423,7 +423,7 @@ def add_url(client, update):
     elif len(args) == 2:
         chat_name = args[0].strip()
         url = args[1].strip()
-        chat_info = get_chat_by_username(update, chat_name)
+        chat_info = get_chat_by_username(client, update, chat_name)
         text = "I don't have access to chat " + chat_name + '\n' + text
         if chat_info is None:
             update.reply_text(text=text, quote=False, parse_mode='html')
