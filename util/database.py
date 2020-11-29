@@ -29,7 +29,7 @@ class DatabaseHandler(object):
             fined = self.redis.scan(cursor, str(search))
             cursor = fined[0]
             names.extend(fined[1])
-        return names
+        return sorted(set(names))
 
     def find_names(self, find):
         search = '*' + find + '*'
