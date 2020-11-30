@@ -124,7 +124,6 @@ def _introduce(client, update):
     me = client.get_me()
     if me.username == '@' + BOT_NAME_LD:
         _set_daily_liturgy(client, update)
-        return
 
     chat_title = update.chat.title
     chat_id = update.chat.id
@@ -162,7 +161,6 @@ def start(client, update):
     me = client.get_me()
     if me.username == '@' + BOT_NAME_LD:
         _set_daily_liturgy(client, update)
-        return
 
     chat_id = update.chat.id
     from_user = update.from_user.id
