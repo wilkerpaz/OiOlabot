@@ -73,7 +73,7 @@ def _check(_, update, override_lock=None):
 
     if chat_id > 0:
         text = 'Please add me to a group first!'
-        update.reply_text(chat_id=chat_id, text=text)
+        update.reply_text(text=text)
         return False
 
     locked = override_lock if override_lock is not None \
