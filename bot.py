@@ -492,6 +492,7 @@ def remove_url(client, update):
     chat_name = args[0] if len(args) == 2 else None
     chat_id_db = db.get_chat_id_for_chat_name(user_id, chat_name) if chat_name else update.chat.id
     url = args[1] if len(args) == 2 else args[0]
+    logger.error(f'try remove url {url} for chat_name {chat_name} and chat_id_db {chat_id_db}')
 
     if chat_id_db is None:
         text = "Don't exist chat " + chat_name + '\n' + text
