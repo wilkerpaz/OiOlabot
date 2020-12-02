@@ -490,7 +490,6 @@ def remove_url(client, update):
 
     user_id = update.from_user.id
     chat_name = args[0] if len(args) == 2 else None
-    logger.error(f'remove_url {str(user_id)}{" " + chat_name if chat_name else ""}')
     chat_id_db = db.get_chat_id_for_chat_name(user_id, chat_name) if chat_name else update.chat.id
     url = args[1] if len(args) == 2 else args[0]
 
