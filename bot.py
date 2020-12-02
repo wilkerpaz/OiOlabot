@@ -490,22 +490,21 @@ def remove_url(client, update):
 
     user_id = update.from_user.id
     chat_name = args[0] if len(args) == 2 else None
-    chat_id_db = db.get_chat_id_for_chat_name(user_id, chat_name) if chat_name else update.chat.id
+    chat_id_db = db.get_chat_id_for_chat_name(user_id, chat_name) if chat_name else chat_id
     url = args[1] if len(args) == 2 else args[0]
-    logger.error(f'try remove url {url} for chat_name {chat_name} and chat_id_db {chat_id_db}')
 
     if chat_id_db is None:
         text = "Don't exist chat " + chat_name + '\n' + text
         update.reply_text(text=text, quote=False, parse_mode='html')
     else:
-        exist_url = db.exist_url_to_chat(user_id, chat_id, url)
+        exist_url = db.exist_url_to_chat(user_id, chat_id_db, url)
         if not exist_url:
             chat_name = chat_name or update.from_user.first_name
             text = "Don't exist " + url + " for chat " + chat_name + '\n' + text
             update.reply_text(text=text, quote=False, parse_mode='html')
             result = None
         else:
-            result = True if db.del_url_for_chat(chat_id, url) else None
+            result = True if db.del_url_for_chat(chat_id_db, url) else None
 
         if result:
             text = "I removed " + url + " from your subscriptions!"
