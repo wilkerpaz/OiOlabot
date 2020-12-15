@@ -181,6 +181,7 @@ def new_chat_members(client, update):
 
 @bot.on_message(filters.left_chat_member)
 def left_chat_member(client, update):
+    print(update)
     me = client.get_me()
     member = update.left_chat_member
     if member.id == me.id:
@@ -197,7 +198,7 @@ def goodbye(update):
     chat_title = update.chat.title
     first_name = update.left_chat_member.first_name
 
-    logger.info(f'{escape(first_name)} left chat {chat_id} ({escape(chat_title)})')
+    logger.info(f'{first_name} left chat {chat_id} ({chat_title})')
 
     # Pull the custom message for this chat from the database
     text = db.get_value_name_key('group:' + str(chat_id), 'chat_goodbye')
