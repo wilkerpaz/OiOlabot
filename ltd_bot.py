@@ -1,25 +1,42 @@
 import logging
 from html import escape
 
+from datetime import datetime, timedelta
 from decouple import config
-from emoji import emojize
-from pyrogram import Client, filters
+from pyrogram import Client, filters, emoji
 from pyrogram.errors import RPCError
+from pyrogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 from util.database import DatabaseHandler
+from util import calendar
 from util.feedhandler import FeedHandler
+from util.liturgiadiaria import BuscarLiturgia
 
 LOG = config('LOG')
-DB = config('DB_LD')
-BOT_NAME = config('BOT_NAME_LD')
-BOT_NAME_LD = config('BOT_NAME_LD')
-API_TOKEN = config('DEV_TOKEN_LD')  # Tokens do Bot de Desenvolvimento
-ADMINS = list(config('CHAT_ID'))
-
 logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
+
+DB = config('DB_LD')
+BOT_NAME = config('BOT_NAME_LD')
+API_TOKEN = config('DEV_TOKEN_LD')  # Tokens do Bot de Desenvolvimento
+
+bot = Client(session_name=BOT_NAME, bot_token=API_TOKEN)
+db = DatabaseHandler(DB)
+
+buttons = [
+    [
+        KeyboardButton(text='/ontem'),
+        KeyboardButton(text='/hoje'),
+        KeyboardButton(text='/amanha'),
+    ],
+    [
+        KeyboardButton(text='/dominical'),
+        KeyboardButton(text='/calendario'),
+    ],
+]
+keyboard = ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 help_text = 'Welcomes everyone that enters a group chat that this bot is a ' \
             'part of. By default, only the person who invited the bot into ' \
@@ -43,9 +60,6 @@ help_text = 'Welcomes everyone that enters a group chat that this bot is a ' \
             "/start - Activates the bot. If you have subscribed to RSS feeds, you will receive news from now on\n " \
             "/stop - Deactivates the bot. You won't receive any messages from the bot until you activate the bot again \
             using the start comand\n"
-
-bot = Client(session_name=BOT_NAME, bot_token=API_TOKEN)
-db = DatabaseHandler(DB)
 
 help_text_feed = "RSS Management\n" \
                  "/addurl <url> - Adds a util subscription to your list. or\n" \
@@ -102,7 +116,7 @@ def _welcome(update, member=None):
         return
 
     # Use default message if there's no custom one set
-    welcome_text = f'Hello $username! Welcome to $title {emojize(":grinning_face:")}'
+    welcome_text = f'Hello $username! Welcome to $title {emoji.GRINNING_FACE}'
     if text_group:
         text = welcome_text + '\n' + text_group
 
@@ -122,14 +136,14 @@ def _introduce(client, update):
     user who invited us.
     """
     me = client.get_me()
-    if me.username == '@' + BOT_NAME_LD:
-        _set_daily_liturgy(client, update)
+    if me.username == '@' + BOT_NAME:
+        start(client, update)
 
     chat_title = update.chat.title
     chat_id = update.chat.id
     first_name = update.from_user.first_name
-    chat_name = '@' + update.chat.username or '@' + update.from_user.username \
-                or update.from_user.first_name
+    chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
+        if update.from_user.username else update.from_user.first_name
     user_id = update.from_user.id
 
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
@@ -137,37 +151,72 @@ def _introduce(client, update):
     db.update_group(chat_id=chat_id, chat_name=chat_name, chat_title=chat_title, user_id=user_id)
 
     text = f'Hello {escape(first_name)}! I will now greet anyone who joins this chat ({chat_title}) with a' \
-           f' nice message {emojize(":grinning_face:")} \n\ncheck the /help command for more info!'
+           f' nice message {emoji.GRINNING_FACE} \n\ncheck the /help command for more info!'
     update.reply_text(text=text, quote=False, parse_mode='html')
 
 
-def _set_daily_liturgy(_, update):
+@bot.on_message(filters.regex(r'^/(start|help)($|@\w+)'))
+def start(_, update):
+    print(update)
     chat_id = update.chat.id
-    chat_name = '@' + update.chat.username or '@' + update.from_user.username \
-                or update.from_user.first_name
+    chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
+                if update.from_user.username else update.from_user.first_name
     chat_title = update.chat.title or update.from_user.first_name
     user_id = update.from_user.id
     url = 'http://feeds.feedburner.com/evangelhoddia/dia'
     text = 'You will receive the daily liturgy every day.\nFor more commands click /help'
 
     db.set_url_to_chat(chat_id=chat_id, chat_name=chat_name, url=url, user_id=user_id)
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.delete()
+    update.reply_text(text=text, quote=False, parse_mode='html', reply_markup=keyboard)
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
 
 
-@bot.on_message(filters.regex(r'^/(start|help)($|@\w+)'))
-def start(client, update):
-    """ Prints help text """
-    me = client.get_me()
-    if me.username == '@' + BOT_NAME_LD:
-        _set_daily_liturgy(client, update)
+@bot.on_message(filters.regex(r'^/(ontem|hoje|amanha|dominical|calendario)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
+def check_button(client, update):
 
     chat_id = update.chat.id
-    from_user = update.from_user.id
+    if chat_id < 0:
+        if not _check(client, update):
+            return
+    client.send_chat_action(chat_id, "typing")
+    command = update.text
+    update.delete()
+    leituras = None
 
-    if not bool(db.get_value_name_key('group:' + str(chat_id), 'chat_quiet')) \
-            or str(db.get_value_name_key('group:' + str(chat_id), 'chat_adm')) == str(from_user):
-        update.reply_text(text=help_text, quote=False, parse_mode='MARKDOWN', disable_web_page_preview=True)
+    if command == '/ontem':
+        date = datetime.now() + timedelta(days=-1)
+        leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+    elif command == '/hoje':
+        date = datetime.now()
+        leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+    elif command == '/amanha':
+        date = datetime.now() + timedelta(days=1)
+        leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+    elif command == '/dominical':
+        weekday = 6 - datetime.now().weekday()
+        date = datetime.now() + timedelta(days=weekday)
+        leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+    else:
+        client.send_message(chat_id=chat_id, text="Please select a date: ", reply_markup=calendar.create_calendar())
+
+    if leituras:
+        for text in leituras:
+            client.send_message(chat_id=chat_id, text=text, parse_mode='html', reply_markup=keyboard)
+
+
+@bot.on_callback_query()
+def inline_handler(client, update):
+    chat_id = update.from_user.id
+    selected, date = calendar.process_calendar_selection(client, update)
+    leituras = None
+    if selected:
+        client.send_chat_action(chat_id, "typing")
+        update.message.delete()
+        leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+        if leituras:
+            for text in leituras:
+                client.send_message(chat_id=chat_id, text=text, parse_mode='html', reply_markup=keyboard)
 
 
 @bot.on_message(filters.new_chat_members)
