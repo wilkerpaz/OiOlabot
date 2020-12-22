@@ -198,7 +198,7 @@ def check_button(client, update):
         leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
     else:
         client.send_message(chat_id=chat_id, text="Please select a date: ",
-                            no_webpage=True,
+                            disable_web_page_preview=True,
                             reply_markup=calendar.create_calendar())
 
     if leituras:
@@ -207,7 +207,7 @@ def check_button(client, update):
 
         for message in leituras:
             text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
-            client.send_message(chat_id=chat_id, text=text, no_webpage=True, parse_mode='html', reply_markup=keyboard)
+            client.send_message(chat_id=chat_id, text=text, disable_web_page_preview=True, parse_mode='html', reply_markup=keyboard)
 
 
 @bot.on_callback_query()
@@ -224,7 +224,7 @@ def inline_handler(client, update):
 
             for message in leituras:
                 text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
-                client.send_message(chat_id=chat_id, text=text, no_webpage=True, parse_mode='html',
+                client.send_message(chat_id=chat_id, text=text, disable_web_page_preview=True, parse_mode='html',
                                     reply_markup=keyboard)
 
 
