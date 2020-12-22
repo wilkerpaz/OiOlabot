@@ -201,9 +201,9 @@ class DatabaseHandler(object):
         return self.extract_url_from_names(active_keys)
 
     '''return all url deactivated'''
-    def get_name_urls_activated(self):
-        names = self._find('user_url*')
-        return sorted(set([name for name in names if not self.get_value_name_key(name, 'disable') == 'False']))
+    def get_name_urls_activated(self, url=None):
+        names = self._find('user_url*') if not url else self._find('user_url*' + url + '*')
+        return sorted(set([name for name in names if self.get_value_name_key(name, 'disable') == 'False']))
 
     '''return all url deactivated'''
     def get_name_urls_deactivated(self):
@@ -242,6 +242,13 @@ class DatabaseHandler(object):
     '''disable chat_id'''
     def disable_chat_id_daily_liturgy(self, chat_id):
         names = self._find('daily_liturgy:*chat_id:' + str(chat_id) + '*')
+        mapping = {'disable': 'True'}
+        disables = [self.set_name_key(name=name, mapping=mapping) for name in names] if names else []
+        return disables
+
+    '''disable url for chat'''
+    def disable_url_chat(self, chat_id):
+        names = self._find('user_url:*chat_id:' + str(chat_id) + '*')
         mapping = {'disable': 'True'}
         disables = [self.set_name_key(name=name, mapping=mapping) for name in names] if names else []
         return disables

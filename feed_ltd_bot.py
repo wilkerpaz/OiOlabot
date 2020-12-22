@@ -5,9 +5,10 @@ from multiprocessing.dummy import Pool as ThreadPool
 import telebot
 from decouple import config
 
-from util.database import DatabaseHandler
+from util.database_daily_liturgy import DatabaseHandler
 from util.datehandler import DateHandler
 from util.feedhandler import FeedHandler
+from util.liturgiadiaria import BuscarLiturgia
 
 LOG = config('LOG')
 DB = config('DB_LD')
@@ -24,6 +25,19 @@ logger.setLevel(logging.INFO)
 bot = telebot.TeleBot(API_TOKEN, skip_pending=True)
 bot.stop_polling()
 db = DatabaseHandler(DB)
+
+
+def daily_liturgy():
+    date = DateHandler.datetime.now()
+    readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+    if readings:
+        for chat_id in db.get_chat_id_activated():
+            chat = bot.get_chat(chat_id=str(chat_id))
+            chat_username = chat.username if (chat.username and chat.type != 'private') else None
+
+            for message in readings:
+                text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
+                bot.send_message(chat_id, text, disable_web_page_preview=True)
 
 
 def parse_parallel():
@@ -75,7 +89,7 @@ def update_url(url, last_update, last_url):
 
 
 def send_newest_messages(message, url, disable_page_preview=None):
-    names_url = db.get_names_for_user_activated(url)
+    names_url = db.get_name_urls_activated(url)
     is_update_url = False
     for name in names_url:
         chat_id = db.get_value_name_key(name, 'chat_id')
