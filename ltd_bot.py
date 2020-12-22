@@ -157,7 +157,6 @@ def _introduce(client, update):
 
 @bot.on_message(filters.regex(r'^/(start|help)($|@\w+)'))
 def start(_, update):
-    print(update)
     chat_id = update.chat.id
     chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
                 if update.from_user.username else update.from_user.first_name
