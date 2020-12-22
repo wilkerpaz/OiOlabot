@@ -219,7 +219,7 @@ def inline_handler(client, update):
         update.message.delete()
         leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
         if leituras:
-            chat = update.chat
+            chat = update.message.chat
             chat_username = chat.username if (chat.username and chat.type != 'private') else None
 
             for message in leituras:
