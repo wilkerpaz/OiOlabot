@@ -169,7 +169,7 @@ def start(_, update):
 
 
 @bot.on_message(filters.regex(r'^/(stop)($|@\w+)'))
-def start(_, update):
+def stop(_, update):
     chat_id = update.chat.id
     chat_title = update.chat.title or update.from_user.first_name
     text = 'ok. Você pode digitar /start para iniciar novamente o recebimento das leituras diárias'
