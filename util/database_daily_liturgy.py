@@ -270,8 +270,8 @@ class DatabaseHandler(object):
         return True if result[0] == 1 else None
 
     '''del url for chat'''
-    def del_chat_id(self, chat_id):
-        names = self._find('daily_liturgy:*' + str(chat_id) + '*')
+    def del_chat_id_daily_liturgy(self, chat_id):
+        names = self._find('daily_liturgy*chat_id:' + str(chat_id) + '*')
         result = self.del_names(names)
         return True if result[0] == 1 else None
 

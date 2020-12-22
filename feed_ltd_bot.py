@@ -28,8 +28,8 @@ db = DatabaseHandler(DB)
 
 
 def daily_liturgy():
-    datetime = DateHandler.datetime
-    date = datetime.now()
+    datetime = DateHandler
+    date = DateHandler.get_datetime_now()
     readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
     if readings:
         for chat_id in db.get_chat_id_activated():
@@ -39,7 +39,7 @@ def daily_liturgy():
                 chat = bot.get_chat(chat_id=str(chat_id))
                 chat_username = chat.username if (chat.username and chat.type != 'private') else None
                 last_send = DateHandler.parse_datetime(str(chat_info['last_send']))
-                hour = datetime.strptime('08:00', '%H:%M').hour
+                hour = datetime.time('08:00:00-03:00').hour
                 if date.date() > last_send.date() and date.hour > hour:
                     for message in readings:
                         text = message + '\n\nt.me/' + (chat_username or BOT_NAME)

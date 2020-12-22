@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from decouple import config
 from pyrogram import Client, filters, emoji
 from pyrogram.errors import RPCError
-from pyrogram.types import KeyboardButton, ReplyKeyboardMarkup
+from pyrogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from util.database_daily_liturgy import DatabaseHandler
 from util import calendar
@@ -166,6 +166,18 @@ def start(_, update):
     update.delete()
     update.reply_text(text=text, quote=False, parse_mode='html', reply_markup=keyboard)
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
+
+
+@bot.on_message(filters.regex(r'^/(stop)($|@\w+)'))
+def start(_, update):
+    chat_id = update.chat.id
+    chat_title = update.chat.title or update.from_user.first_name
+    text = 'ok. Você pode digitar /start para iniciar novamente o recebimento das leituras diárias'
+
+    db.del_chat_id_daily_liturgy(chat_id=chat_id)
+    update.delete()
+    update.reply_text(text=text, quote=False, parse_mode='html', reply_markup=ReplyKeyboardRemove())
+    logger.info(f'left chat {chat_id} ({escape(chat_title)})')
 
 
 @bot.on_message(filters.regex(r'^/(ontem|hoje|amanha|dominical|calendario)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
