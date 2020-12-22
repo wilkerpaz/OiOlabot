@@ -201,7 +201,11 @@ def check_button(client, update):
         client.send_message(chat_id=chat_id, text="Please select a date: ", reply_markup=calendar.create_calendar())
 
     if leituras:
-        for text in leituras:
+        chat = update.chat
+        chat_username = chat.username if (chat.username and chat.type != 'private') else None
+
+        for message in leituras:
+            text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
             client.send_message(chat_id=chat_id, text=text, parse_mode='html', reply_markup=keyboard)
 
 
@@ -209,13 +213,15 @@ def check_button(client, update):
 def inline_handler(client, update):
     chat_id = update.from_user.id
     selected, date = calendar.process_calendar_selection(client, update)
-    leituras = None
     if selected:
         client.send_chat_action(chat_id, "typing")
         update.message.delete()
         leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
         if leituras:
-            for text in leituras:
+            chat = update.chat
+            chat_username = chat.username if (chat.username and chat.type != 'private') else None
+            for message in leituras:
+                text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
                 client.send_message(chat_id=chat_id, text=text, parse_mode='html', reply_markup=keyboard)
 
 
