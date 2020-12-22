@@ -182,53 +182,59 @@ def check_button(client, update):
 
     db.set_user_daily_liturgy(chat_id=chat_id, chat_name=chat_name, user_id=user_id)
 
-    client.send_chat_action(chat_id, "typing")
-    command = update.text
-    update.delete()
-    readings = None
+    try:
+        client.send_chat_action(chat_id, "typing")
+        command = update.text
+        update.delete()
+        readings = None
 
-    if command == '/ontem':
-        date = datetime.now() + timedelta(days=-1)
-        readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
-    elif command == '/hoje':
-        date = datetime.now()
-        readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
-    elif command == '/amanha':
-        date = datetime.now() + timedelta(days=1)
-        readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
-    elif command == '/dominical':
-        weekday = 6 - datetime.now().weekday()
-        date = datetime.now() + timedelta(days=weekday)
-        readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
-    else:
-        text = "Please select a date:"
-        calendar_keyboard = calendar.create_calendar()
-        client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=calendar_keyboard)
+        if command == '/ontem':
+            date = datetime.now() + timedelta(days=-1)
+            readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+        elif command == '/hoje':
+            date = datetime.now()
+            readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+        elif command == '/amanha':
+            date = datetime.now() + timedelta(days=1)
+            readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+        elif command == '/dominical':
+            weekday = 6 - datetime.now().weekday()
+            date = datetime.now() + timedelta(days=weekday)
+            readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+        else:
+            text = "Please select a date:"
+            calendar_keyboard = calendar.create_calendar()
+            client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=calendar_keyboard)
 
-    if readings:
-        chat = update.chat
-        chat_username = chat.username if (chat.username and chat.type != 'private') else None
+        if readings:
+            chat = update.chat
+            chat_username = chat.username if (chat.username and chat.type != 'private') else None
 
-        for message in readings:
-            text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
-            client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
+            for message in readings:
+                text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
+                client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
+    except RPCError:
+        pass
 
 
 @bot.on_callback_query()
 def inline_handler(client, update):
     chat_id = update.from_user.id
     selected, date = calendar.process_calendar_selection(client, update)
-    if selected:
-        client.send_chat_action(chat_id, "typing")
-        update.message.delete()
-        readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
-        if readings:
-            chat = update.message.chat
-            chat_username = chat.username if (chat.username and chat.type != 'private') else None
+    try:
+        if selected:
+            client.send_chat_action(chat_id, "typing")
+            update.message.delete()
+            readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+            if readings:
+                chat = update.message.chat
+                chat_username = chat.username if (chat.username and chat.type != 'private') else None
 
-            for message in readings:
-                text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
-                client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
+                for message in readings:
+                    text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
+                    client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
+    except RPCError:
+        pass
 
 
 @bot.on_message(filters.new_chat_members)
