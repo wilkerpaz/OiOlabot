@@ -48,10 +48,8 @@ class BuscarLiturgia():
 
         # Se o dia (key) tiver uma leitura (value), mostrar o valor encontrado
         if mes_liturgia.get(self.dia):
-            print("\nURL encontrada: %s" % mes_liturgia[self.dia])
             return self.obter_liturgia(mes_liturgia[self.dia])
         else:
-            print("\nLiturgia indisponível para a data especificada")
             return False
 
     def obter_liturgia(self, url):

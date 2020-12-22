@@ -123,7 +123,20 @@ class DatabaseHandler(object):
         name = 'daily_liturgy:user_id:' + str(user_id) + ':chat_id:' + str(chat_id)
         name_user_chat = self.exist_name(name)
         if not name_user_chat:
-            mapping = {'chat_id': str(chat_id), 'chat_name': chat_name, 'user_id': str(user_id), 'disable': 'False'}
+            mapping = {'chat_id': str(chat_id),
+                       'chat_name': chat_name,
+                       'user_id': str(user_id),
+                       'disable': 'False',
+                       'last_send': str(DateHandler.datetime.now())}
+            return True if self.set_name_key(name=name, mapping=mapping) else False
+        else:
+            return False
+
+    '''register a url for user or group'''
+    def set_last_send_daily_liturgy(self, chat_id):
+        name = self._find('daily_liturgy*chat_id:' + str(chat_id))[0]
+        if name:
+            mapping = {'last_send': str(DateHandler.datetime.now())}
             return True if self.set_name_key(name=name, mapping=mapping) else False
         else:
             return False
@@ -139,17 +152,18 @@ class DatabaseHandler(object):
         return False
 
     '''return user info daily liturgy'''
-    def get_user_daily_liturgy(self, user_id):
-        names = self._find('daily_liturgy:*' + str(user_id) + ':*')
+    def get_chat_info_daily_liturgy(self, chat_id):
+        names = self._find('daily_liturgy:*chat_id:' + str(chat_id))
         chat_info = []
         for name in names:
+            mapping = {}
             keys = self.get_all_keys_for_name(name)
-            chat_id = keys.get('chat_id')
-            chat_name = keys.get('chat_name')
-            user_id = keys.get('user_id')
-            disable = keys.get('disable')
+            mapping['chat_id'] = keys.get('chat_id')
+            mapping['chat_name'] = keys.get('chat_name')
+            mapping['user_id'] = keys.get('user_id')
+            mapping['disable'] = keys.get('disable')
+            mapping['last_send'] = keys.get('last_send')
 
-            mapping = {'user_id': str(user_id), 'chat_name': chat_name, 'chat_id': str(chat_id), 'disable': disable}
             chat_info.append(mapping)
         return chat_info
 

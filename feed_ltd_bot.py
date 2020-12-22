@@ -28,16 +28,28 @@ db = DatabaseHandler(DB)
 
 
 def daily_liturgy():
-    date = DateHandler.datetime.now()
+    datetime = DateHandler.datetime
+    date = datetime.now()
     readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
     if readings:
         for chat_id in db.get_chat_id_activated():
-            chat = bot.get_chat(chat_id=str(chat_id))
-            chat_username = chat.username if (chat.username and chat.type != 'private') else None
+            send_message = False
+            try:
+                chat_info = db.get_chat_info_daily_liturgy(chat_id)[0]
+                chat = bot.get_chat(chat_id=str(chat_id))
+                chat_username = chat.username if (chat.username and chat.type != 'private') else None
+                last_send = DateHandler.parse_datetime(str(chat_info['last_send']))
+                hour = datetime.strptime('08:00', '%H:%M').hour
+                if date.date() > last_send.date() and date.hour > hour and chat_id == '26072030':
+                    for message in readings:
+                        text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
+                        bot.send_message(chat_id, text, disable_web_page_preview=True)
+                        send_message = True
+            except telebot.apihelper.ApiException as _:
+                errors(chat_id)
 
-            for message in readings:
-                text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
-                bot.send_message(chat_id, text, disable_web_page_preview=True)
+            if send_message:
+                db.set_last_send_daily_liturgy(chat_id)
 
 
 def parse_parallel():
@@ -51,6 +63,7 @@ def parse_parallel():
     time_ended = DateHandler.datetime.now()
     duration = time_ended - time_started
     logger.info(f"Finished updating! Parsed {str(len(urls))} rss feeds in {str(duration)}! {BOT_NAME}")
+    daily_liturgy()
     return True
 
 
@@ -100,6 +113,7 @@ def send_newest_messages(message, url, disable_page_preview=None):
                 chat_username = chat.username if (chat.username and chat.type != 'private') else None
                 text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
                 result = bot.send_message(chat_id=chat_id, text=text, disable_web_page_preview=disable_page_preview)
+                # result = True
                 if not result:
                     errors(chat_id=chat_id, url=url)
                 else:
@@ -109,12 +123,15 @@ def send_newest_messages(message, url, disable_page_preview=None):
     return is_update_url
 
 
-def errors(chat_id, url):
+def errors(chat_id, url=None):
     """ Error handling """
     try:
-        db.disable_url_chat(chat_id)
-
-        logger.error(f'disable url {url} for chat_id {chat_id} from chat list')
+        if url:
+            db.disable_url_chat(chat_id)
+            logger.error(f'disable url {url} for chat_id {chat_id} from chat list')
+        else:
+            db.disable_chat_id_daily_liturgy(chat_id)
+            logger.error(f'disable chat_id {chat_id} from chat list daily liturgy')
 
     except ValueError as _:
         logger.error(f"error ValueError {str(_)}")
