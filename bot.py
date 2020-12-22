@@ -127,8 +127,8 @@ def _introduce(client, update):
     chat_title = update.chat.title
     chat_id = update.chat.id
     first_name = update.from_user.first_name
-    chat_name = '@' + update.chat.username or '@' + update.from_user.username \
-                or update.from_user.first_name
+    chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
+        if update.from_user.username else update.from_user.first_name
     user_id = update.from_user.id
 
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
@@ -142,8 +142,8 @@ def _introduce(client, update):
 
 def _set_daily_liturgy(_, update):
     chat_id = update.chat.id
-    chat_name = '@' + update.chat.username or '@' + update.from_user.username \
-                or update.from_user.first_name
+    chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
+        if update.from_user.username else update.from_user.first_name
     chat_title = update.chat.title or update.from_user.first_name
     user_id = update.from_user.id
     url = 'http://feeds.feedburner.com/evangelhoddia/dia'
@@ -639,7 +639,8 @@ def owner(_, update):
     """
     chat_id = update.chat.id
     chat_title = update.chat.title
-    chat_name = '@' + update.chat.username
+    chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
+        if update.from_user.username else update.from_user.first_name
     user_id = update.from_user.id
 
     db.update_group(chat_id=chat_id, chat_name=chat_name, chat_title=chat_title, user_id=user_id)
