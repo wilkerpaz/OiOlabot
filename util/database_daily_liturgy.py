@@ -121,16 +121,12 @@ class DatabaseHandler(object):
     '''register a url for user or group'''
     def set_user_daily_liturgy(self, chat_id, chat_name, user_id):
         name = 'daily_liturgy:user_id:' + str(user_id) + ':chat_id:' + str(chat_id)
-        name_user_chat = self.exist_name(name)
-        if not name_user_chat:
-            mapping = {'chat_id': str(chat_id),
-                       'chat_name': chat_name,
-                       'user_id': str(user_id),
-                       'disable': 'False',
-                       'last_send': str(DateHandler.datetime.now())}
-            return True if self.set_name_key(name=name, mapping=mapping) else False
-        else:
-            return False
+        mapping = {'chat_id': str(chat_id),
+                   'chat_name': chat_name,
+                   'user_id': str(user_id),
+                   'disable': 'False',
+                   'last_send': str(DateHandler.get_datetime_now())}
+        return True if self.set_name_key(name=name, mapping=mapping) else False
 
     '''register a url for user or group'''
     def set_last_send_daily_liturgy(self, chat_id):
