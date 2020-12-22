@@ -2,8 +2,7 @@ import logging
 from html import escape
 
 from decouple import config
-from emoji import emojize
-from pyrogram import Client, filters
+from pyrogram import Client, filters, emoji
 from pyrogram.errors import RPCError
 
 from util.database import DatabaseHandler
@@ -101,7 +100,7 @@ def _welcome(update, member=None):
         return
 
     # Use default message if there's no custom one set
-    welcome_text = f'Hello $username! Welcome to $title {emojize(":grinning_face:")}'
+    welcome_text = f'Hello $username! Welcome to $title {emoji.GRINNING_FACE}'
     if text_group:
         text = welcome_text + '\n' + text_group
 
@@ -136,7 +135,7 @@ def _introduce(client, update):
     db.update_group(chat_id=chat_id, chat_name=chat_name, chat_title=chat_title, user_id=user_id)
 
     text = f'Hello {escape(first_name)}! I will now greet anyone who joins this chat ({chat_title}) with a' \
-           f' nice message {emojize(":grinning_face:")} \n\ncheck the /help command for more info!'
+           f' nice message {emoji.GRINNING_FACE} \n\ncheck the /help command for more info!'
     update.reply_text(text=text, quote=False, parse_mode='html')
 
 

@@ -7,7 +7,7 @@ from pyrogram import Client, filters, emoji
 from pyrogram.errors import RPCError
 from pyrogram.types import KeyboardButton, ReplyKeyboardMarkup
 
-from util.database import DatabaseHandler
+from util.database_daily_liturgy import DatabaseHandler
 from util import calendar
 from util.feedhandler import FeedHandler
 from util.liturgiadiaria import BuscarLiturgia
@@ -74,8 +74,6 @@ help_text_feed = "RSS Management\n" \
 
 help_text = help_text + help_text_feed
 
-
-# def _check(client, update, override_lock=None):
 
 def _check(_, update, override_lock=None):
     """
@@ -162,10 +160,9 @@ def start(_, update):
                 if update.from_user.username else update.from_user.first_name
     chat_title = update.chat.title or update.from_user.first_name
     user_id = update.from_user.id
-    url = 'http://feeds.feedburner.com/evangelhoddia/dia'
     text = 'You will receive the daily liturgy every day.\nFor more commands click /help'
 
-    db.set_url_to_chat(chat_id=chat_id, chat_name=chat_name, url=url, user_id=user_id)
+    db.set_user_daily_liturgy(chat_id=chat_id, chat_name=chat_name, user_id=user_id)
     update.delete()
     update.reply_text(text=text, quote=False, parse_mode='html', reply_markup=keyboard)
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
@@ -175,39 +172,46 @@ def start(_, update):
 def check_button(client, update):
 
     chat_id = update.chat.id
+    chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
+                if update.from_user.username else update.from_user.first_name
+    user_id = update.from_user.id
+
     if chat_id < 0:
         if not _check(client, update):
             return
+
+    db.set_user_daily_liturgy(chat_id=chat_id, chat_name=chat_name, user_id=user_id)
+
     client.send_chat_action(chat_id, "typing")
     command = update.text
     update.delete()
-    leituras = None
+    readings = None
 
     if command == '/ontem':
         date = datetime.now() + timedelta(days=-1)
-        leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+        readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
     elif command == '/hoje':
         date = datetime.now()
-        leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+        readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
     elif command == '/amanha':
         date = datetime.now() + timedelta(days=1)
-        leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+        readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
     elif command == '/dominical':
         weekday = 6 - datetime.now().weekday()
         date = datetime.now() + timedelta(days=weekday)
-        leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+        readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
     else:
-        client.send_message(chat_id=chat_id, text="Please select a date: ",
-                            disable_web_page_preview=True,
-                            reply_markup=calendar.create_calendar())
+        text = "Please select a date:"
+        calendar_keyboard = calendar.create_calendar()
+        client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=calendar_keyboard)
 
-    if leituras:
+    if readings:
         chat = update.chat
         chat_username = chat.username if (chat.username and chat.type != 'private') else None
 
-        for message in leituras:
+        for message in readings:
             text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
-            client.send_message(chat_id=chat_id, text=text, disable_web_page_preview=True, parse_mode='html', reply_markup=keyboard)
+            client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
 
 
 @bot.on_callback_query()
@@ -217,15 +221,14 @@ def inline_handler(client, update):
     if selected:
         client.send_chat_action(chat_id, "typing")
         update.message.delete()
-        leituras = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
-        if leituras:
+        readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+        if readings:
             chat = update.message.chat
             chat_username = chat.username if (chat.username and chat.type != 'private') else None
 
-            for message in leituras:
+            for message in readings:
                 text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
-                client.send_message(chat_id=chat_id, text=text, disable_web_page_preview=True, parse_mode='html',
-                                    reply_markup=keyboard)
+                client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
 
 
 @bot.on_message(filters.new_chat_members)
@@ -613,7 +616,7 @@ def list_url_deactivated(_, update):
     text = "Here is a list of all name deactivated"
     update.reply_text(text=text, quote=False, parse_mode='html')
 
-    urls = db.get_urls_deactivated()
+    urls = db.get_name_urls_deactivated()
     for url in urls:
         text = '<code>/removekey ' + url + '</code>'
         update.reply_text(text=text, quote=False, parse_mode='html')
