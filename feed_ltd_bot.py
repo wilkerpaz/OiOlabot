@@ -40,7 +40,7 @@ def daily_liturgy():
                 chat_username = chat.username if (chat.username and chat.type != 'private') else None
                 last_send = DateHandler.parse_datetime(str(chat_info['last_send']))
                 hour = datetime.strptime('08:00', '%H:%M').hour
-                if date.date() > last_send.date() and date.hour > hour and chat_id == '26072030':
+                if date.date() > last_send.date() and date.hour > hour:
                     for message in readings:
                         text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
                         bot.send_message(chat_id, text, disable_web_page_preview=True)
