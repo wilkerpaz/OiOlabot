@@ -27,31 +27,6 @@ bot.stop_polling()
 db = DatabaseHandler(DB)
 
 
-def daily_liturgy():
-    datetime = DateHandler
-    date = datetime.get_datetime_now()
-    readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
-    if readings:
-        for chat_id in db.get_chat_id_activated():
-            send_message = False
-            try:
-                chat_info = db.get_chat_info_daily_liturgy(chat_id)[0]
-                chat = bot.get_chat(chat_id=str(chat_id))
-                chat_username = chat.username if (chat.username and chat.type != 'private') else None
-                last_send = datetime.parse_datetime(str(chat_info['last_send']))
-                hour_send = datetime.combine(date, datetime.time('08:00:00-03:00'))
-                if date.date() > last_send.date() and date.hour > hour_send.hour:
-                    for message in readings:
-                        text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
-                        bot.send_message(chat_id, text, disable_web_page_preview=True)
-                        send_message = True
-            except telebot.apihelper.ApiException as _:
-                errors(chat_id)
-
-            if send_message:
-                db.set_last_send_daily_liturgy(chat_id)
-
-
 def parse_parallel():
     time_started = DateHandler.datetime.now()
     urls = db.get_urls_activated()
@@ -63,7 +38,6 @@ def parse_parallel():
     time_ended = DateHandler.datetime.now()
     duration = time_ended - time_started
     logger.info(f"Finished updating! Parsed {str(len(urls))} rss feeds in {str(duration)}! {BOT_NAME}")
-    daily_liturgy()
     return True
 
 

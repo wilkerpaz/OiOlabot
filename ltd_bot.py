@@ -2,6 +2,8 @@ import logging
 from html import escape
 
 from datetime import datetime, timedelta
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
 from pyrogram import Client, filters, emoji
 from pyrogram.errors import RPCError
@@ -9,6 +11,7 @@ from pyrogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRem
 
 from util.database_daily_liturgy import DatabaseHandler
 from util import calendar
+from util.datehandler import DateHandler
 from util.feedhandler import FeedHandler
 from util.liturgiadiaria import BuscarLiturgia
 
@@ -607,22 +610,22 @@ def remove_url(client, update):
         db.del_names(names_url)
 
 
-@bot.on_message(filters.regex(r'^/(stop)(\s|$|@\w+)'))
-def stop(client, update):
-    """
-    Stops the bot from working
-    """
-    chat_id = update.chat.id
-
-    # _check admin privilege and group context
-    if chat_id < 0:
-        if not _check(client, update):
-            return
-
-    text = "Oh.. Okay, I will not send you any more news updates! " \
-           "If you change your mind and you want to receive messages " \
-           "from me again use /start command again!"
-    update.reply_text(text=text, quote=False, parse_mode='html')
+# @bot.on_message(filters.regex(r'^/(stop)(\s|$|@\w+)'))
+# def stop(client, update):
+#     """
+#     Stops the bot from working
+#     """
+#     chat_id = update.chat.id
+#
+#     # _check admin privilege and group context
+#     if chat_id < 0:
+#         if not _check(client, update):
+#             return
+#
+#     text = "Oh.. Okay, I will not send you any more news updates! " \
+#            "If you change your mind and you want to receive messages " \
+#            "from me again use /start command again!"
+#     update.reply_text(text=text, quote=False, parse_mode='html')
 
 
 '''FUNÇÕES CONTRLE ADM BANCO DE DADOS'''
@@ -741,9 +744,33 @@ def error(_):
     logger.error(f"def error {_}")
 
 
-# @bot.on_message()
-# def all_update(_, update):
-#     print(update)
+async def daily_liturgy():
+    date = DateHandler.get_datetime_now()
+    readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+    if readings:
+        for chat_id in db.get_chat_id_activated():
+            send_message = False
+            try:
+                chat = await bot.get_chat(chat_id=str(chat_id))
+                chat_username = chat.username if (chat.username and chat.type != 'private') else None
+                for message in readings:
+                    text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
+                    await bot.send_message(chat_id, text, disable_web_page_preview=True)
+                    send_message = True
+            except RPCError as _:
+                errors(chat_id)
+
+            if send_message:
+                db.set_last_send_daily_liturgy(chat_id)
+
+
+def errors(chat_id):
+    """ Error handling """
+    try:
+        db.disable_chat_id_daily_liturgy(chat_id)
+        logger.error(f'disable chat_id {chat_id} from chat list daily liturgy')
+    except ValueError as _:
+        logger.error(f"error ValueError {str(_)}")
 
 
 # Start Bot
@@ -751,6 +778,11 @@ if __name__ == "__main__":
     try:
         logger.critical('Press Ctrl+%s to exit' % 'C')
         print('Press Ctrl+{0} to exit'.format('C'))
+        scheduler = AsyncIOScheduler()
+        last_date = DateHandler.get_datetime_now() + timedelta(days=-1)
+        start_date = DateHandler.combine(last_date.date(), DateHandler.time('00:04:00-03:00'))
+        scheduler.add_job(daily_liturgy, "interval", days=1, start_date=start_date)
+        scheduler.start()
         bot.run()
 
     except RPCError as _:
