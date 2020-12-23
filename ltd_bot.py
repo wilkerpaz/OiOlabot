@@ -141,7 +141,7 @@ def _introduce(client, update):
     chat_id = update.chat.id
     first_name = update.from_user.first_name
     chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
-        if update.from_user.username else update.from_user.first_name
+        if update.from_user.username else chat_title if chat_title else update.from_user.first_name
     user_id = update.from_user.id
 
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
@@ -311,7 +311,7 @@ def set_welcome(client, update):
     # Only continue if there's a message
     if not args:
         text = 'You need to send a message, too! For example:\n' \
-               '<code>/welcome The objective of this group is to...</code>'
+               f'<code>/welcome Hello $username! Welcome to $title {emoji.GRINNING_FACE}</code>'
         update.reply_text(text=text, quote=False, parse_mode='html')
         return
 
