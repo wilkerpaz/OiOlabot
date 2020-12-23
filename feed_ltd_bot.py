@@ -8,7 +8,6 @@ from decouple import config
 from util.database_daily_liturgy import DatabaseHandler
 from util.datehandler import DateHandler
 from util.feedhandler import FeedHandler
-from util.liturgiadiaria import BuscarLiturgia
 
 LOG = config('LOG')
 DB = config('DB_LD')

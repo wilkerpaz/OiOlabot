@@ -701,6 +701,7 @@ def get_key(_, update):
 
     if len(args) == 1:
         keys = db.find_names(args[0])
+        update.reply_text(text=f'Econtrei {len(keys)} chaves', quote=False, parse_mode='html')
         for k in keys:
             text = str('<code>/removekey ' + str(k) + '</code>')
             update.reply_text(text=text, quote=False, parse_mode='html')
