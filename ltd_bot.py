@@ -160,7 +160,13 @@ def start(_, update):
                 if update.from_user.username else update.from_user.first_name
     chat_title = update.chat.title or update.from_user.first_name
     user_id = update.from_user.id
-    text = 'You will receive the daily liturgy every day.\nFor more commands click /help'
+    text = 'A partir de agora vou te enviar a liturgia todos os dias\n' \
+           'Você também podera usar uma das opções abaixo para buscar a leitura desejada\n' \
+           '/ontem - litugia do dia anterior\n' \
+           '/hoje - litugia do dia\n' \
+           '/amanha - liturgia do dia seguinte\n' \
+           '/dominical - litugia dominical\n' \
+           '/calendario - escolher um dia específico.'
 
     db.set_user_daily_liturgy(chat_id=chat_id, chat_name=chat_name, user_id=user_id)
     update.delete()
