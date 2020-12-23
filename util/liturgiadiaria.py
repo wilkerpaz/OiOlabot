@@ -69,11 +69,11 @@ class BuscarLiturgia():
             primeira_linha = leitura_texto_linhas[0]
 
             leitura_texto = leitura_texto.replace(primeira_linha, "%s\n" % primeira_linha)
+            leitura_texto = leitura_texto.replace('\n— Glória a vós, Senhor.\n', '\n— Glória a vós, Senhor.\n\n')
             # print("\n%s" % leitura_texto)
 
-            # Adicionar o dia litúrgico na primeira linha da primeira leitura
-            if leituras.index(leitura) == 0:
-                leitura_texto = "{}\n\n{}".format(dia_liturgia, leitura_texto)
+            # Adicionar o dia litúrgico na primeira linha
+            leitura_texto = "{}\n{}".format(dia_liturgia, leitura_texto)
             self.leituras_lista.append(leitura_texto)
 
         return self.leituras_lista
