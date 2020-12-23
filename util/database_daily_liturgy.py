@@ -82,7 +82,9 @@ class DatabaseHandler(object):
                    'chat_lock': 'True',
                    'chat_name': chat_name,
                    'chat_quiet': 'True',
-                   'chat_title': str(chat_title)}
+                   'chat_title': str(chat_title),
+                   'chat_welcome': 'False',
+                   'chat_goodbye': 'False'}
         if update_owner:
             self.update_owner(chat_id, user_id)
 
