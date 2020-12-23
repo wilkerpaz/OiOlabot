@@ -51,3 +51,12 @@ class DateHandler:
         else:
             result = date_time
         return result.time()
+
+    @staticmethod
+    def combine(date, time):
+        if type(date) is str:
+            date = DateHandler.date(date)
+        if type(time) is str:
+            time = DateHandler.time(time)
+        result = datetime.datetime.combine(date, time)
+        return result
