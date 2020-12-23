@@ -659,7 +659,7 @@ def error(_):
 def backup(_, update):
     chat_id = update.chat.id
     list_admins = db.list_admins()
-    if chat_id in list_admins:
+    if str(chat_id) in list_admins:
         logger.info(f"Send backup {PATH_REDIS} for {chat_id}")
         bot.send_document(chat_id=chat_id, document=PATH_REDIS)
 
