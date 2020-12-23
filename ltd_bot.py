@@ -34,6 +34,7 @@ buttons = [
     [
         KeyboardButton(text='/dominical'),
         KeyboardButton(text='/calendario'),
+        KeyboardButton(text='/help'),
     ],
 ]
 keyboard = ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
@@ -160,8 +161,8 @@ def start(_, update):
                 if update.from_user.username else update.from_user.first_name
     chat_title = update.chat.title or update.from_user.first_name
     user_id = update.from_user.id
-    text = 'A partir de agora vou te enviar a liturgia todos os dias\n\n' \
-           'Você também podera usar uma das opções abaixo para buscar a leitura desejada\n\n' \
+    text = 'Vou te enviar a liturgia todos os dias\n\n' \
+           'Você também podera usar uma das opções abaixo para buscar a leitura do dia desejado\n\n' \
            '/ontem - liturgia do dia anterior\n' \
            '/hoje - liturgia do dia\n' \
            '/amanha - liturgia do dia seguinte\n' \
