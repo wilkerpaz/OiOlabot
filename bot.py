@@ -9,6 +9,7 @@ from util.database import DatabaseHandler
 from util.feedhandler import FeedHandler
 
 LOG = config('LOG')
+PATH_REDIS = config('PATH_REDIS')
 DB = config('DB')
 BOT_NAME = config('BOT_NAME')
 BOT_NAME_LD = config('BOT_NAME_LD')
@@ -652,6 +653,15 @@ def owner(_, update):
 def error(_):
     """ Error handling """
     logger.error(f"def error {_}")
+
+
+@bot.on_message(filters.regex(r'^/(backup)(\s|$|@\w+)'))
+def backup(_, update):
+    chat_id = update.chat.id
+    list_admins = db.list_admins()
+    if chat_id in list_admins:
+        logger.info(f"Send backup {PATH_REDIS} for {chat_id}")
+        bot.send_document(chat_id=chat_id, document=PATH_REDIS)
 
 
 # @bot.on_message()
