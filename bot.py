@@ -661,6 +661,7 @@ def backup(_, update):
     list_admins = db.list_admins()
     if str(chat_id) in list_admins:
         logger.info(f"Send backup {PATH_REDIS} for {chat_id}")
+        db.redis.save()
         bot.send_document(chat_id=chat_id, document=PATH_REDIS)
 
 
