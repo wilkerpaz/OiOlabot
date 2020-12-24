@@ -781,7 +781,7 @@ if __name__ == "__main__":
         print('Press Ctrl+{0} to exit'.format('C'))
         scheduler = AsyncIOScheduler()
         last_date = DateHandler.get_datetime_now() + timedelta(days=-1)
-        start_date = DateHandler.combine(last_date.date(), DateHandler.time('10:00:00-03:00'))
+        start_date = DateHandler.combine(last_date.date(), DateHandler.time('09:00:00-03:00'))
         scheduler.add_job(daily_liturgy, "interval", days=1, start_date=start_date)
         scheduler.start()
         bot.run()
