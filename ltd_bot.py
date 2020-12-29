@@ -208,7 +208,7 @@ def check_button(client, update):
     try:
         client.send_chat_action(chat_id, "typing")
         command = update.text
-        update.delete()
+        # update.delete()
         readings = None
 
         if command == '/ontem':
@@ -256,6 +256,10 @@ def inline_handler(client, update):
                 for message in readings:
                     text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
                     client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
+            else:
+                text = 'No momento estamos sem liturgia cadastrada para esta data.'
+                client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
+
     except RPCError:
         pass
 
