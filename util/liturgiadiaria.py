@@ -1,4 +1,7 @@
+import locale
 import re
+from datetime import datetime, date
+from babel.dates import format_date, format_datetime, format_time
 
 import requests
 from bs4 import BeautifulSoup
@@ -10,6 +13,7 @@ class BuscarLiturgia():
         self.dia = str(dia)
         self.mes = str(mes)
         self.ano = str(ano)
+        self.date = format_date(date(ano, mes, dia), format='full', locale='pt_br')
 
     def obter_url(self):
         r_get_url_payload = {
@@ -57,11 +61,6 @@ class BuscarLiturgia():
         liturgia_do_dia = requests.get(url)
         liturgia_do_dia_soup = BeautifulSoup(liturgia_do_dia.text, "lxml")
 
-        dia = liturgia_do_dia_soup.find("span", {"id": "dia-calendar"}).text
-        mes = liturgia_do_dia_soup.find("span", {"id": "mes-calendar"}).text
-        ano = liturgia_do_dia_soup.find("span", {"id": "ano-calendar"}).text
-        data_formatada = "{} {} {}".format(dia, mes, ano)
-
         dia_liturgia = liturgia_do_dia_soup.find("meta", {"property": "og:title"})["content"]
         leituras = liturgia_do_dia_soup.find_all("div", {"id": re.compile(r"liturgia-\d")})
 
@@ -78,7 +77,7 @@ class BuscarLiturgia():
             # print("\n%s" % leitura_texto)
 
             # Adicionar o dia litúrgico na primeira linha
-            leitura_texto = "{}\n{}\n{}".format(data_formatada, dia_liturgia, leitura_texto)
+            leitura_texto = "{}\n{}\n{}".format(self.date, dia_liturgia, leitura_texto)
             self.leituras_lista.append(leitura_texto)
 
         return self.leituras_lista
