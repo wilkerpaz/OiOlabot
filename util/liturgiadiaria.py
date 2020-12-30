@@ -57,6 +57,11 @@ class BuscarLiturgia():
         liturgia_do_dia = requests.get(url)
         liturgia_do_dia_soup = BeautifulSoup(liturgia_do_dia.text, "lxml")
 
+        dia = liturgia_do_dia_soup.find("span", {"id": "dia-calendar"}).text
+        mes = liturgia_do_dia_soup.find("span", {"id": "mes-calendar"}).text
+        ano = liturgia_do_dia_soup.find("span", {"id": "ano-calendar"}).text
+        data_formatada = "{} {} {}".format(dia, mes, ano)
+
         dia_liturgia = liturgia_do_dia_soup.find("meta", {"property": "og:title"})["content"]
         leituras = liturgia_do_dia_soup.find_all("div", {"id": re.compile(r"liturgia-\d")})
 
@@ -73,7 +78,7 @@ class BuscarLiturgia():
             # print("\n%s" % leitura_texto)
 
             # Adicionar o dia litúrgico na primeira linha
-            leitura_texto = "{}\n{}".format(dia_liturgia, leitura_texto)
+            leitura_texto = "{}\n{}\n{}".format(data_formatada, dia_liturgia, leitura_texto)
             self.leituras_lista.append(leitura_texto)
 
         return self.leituras_lista
