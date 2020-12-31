@@ -5,7 +5,6 @@ import base64
 import time
 import subprocess
 import os
-from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup

@@ -181,10 +181,10 @@ def new_chat_members(client, update):
 
 @bot.on_message(filters.left_chat_member)
 def left_chat_member(client, update):
-    print(update)
     me = client.get_me()
     member = update.left_chat_member
     if member.id == me.id:
+        logger.info(f'O bot foi removido do chat {update.chat.title}')
         print(f'O bot foi removido do chat {update.chat.title}')
         return
     else:
