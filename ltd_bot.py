@@ -180,13 +180,12 @@ async def start(_, update):
 
     date = DateHandler.get_datetime_now()
     readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
-    homily = util.homiliadodia.HomiliadoDia().obter_homilia()
-    audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
-
     if readings:
         await send_daily_liturgy(chat_id, readings)
+    homily = util.homiliadodia.HomiliadoDia().obter_homilia()
     if homily:
         await send_daily_liturgy(chat_id, homily)
+    audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
     if audio:
         await send_daily_liturgy_audio(chat_id, audio['path_audio'], audio['date'])
 
