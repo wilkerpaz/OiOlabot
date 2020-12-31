@@ -240,7 +240,7 @@ def check_button(client, update):
             path_audio = '/tmp/homilia_do_dia.aac'
             date_caption = datetime.now().strftime("%d_%m_%Y") + '\n\nt.me/' + (chat_username or BOT_NAME)
             caption = "homilia_do_dia_%s" % date_caption
-            bot.send_document(chat_id, document=path_audio, caption=caption)
+            bot.send_audio(chat_id, audio=path_audio, caption=caption)
     except RPCError:
         pass
 
@@ -794,7 +794,7 @@ async def send_daily_liturgy_audio(path_audio):
             chat_username = chat.username if (chat.username and chat.type != 'private') else None
             caption = "homilia_do_dia_%s" % datetime.now().strftime("%d_%m_%Y") + '\n\nt.me/' + (
                         chat_username or BOT_NAME)
-            await bot.send_document(chat_id, document=path_audio, caption=caption)
+            await bot.send_audio(chat_id, audio=path_audio, caption=caption)
         except RPCError as _:
             errors(chat_id)
 
