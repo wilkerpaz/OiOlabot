@@ -158,7 +158,7 @@ def _introduce(client, update):
 
 
 @bot.on_message(filters.regex(r'^/(start|help)($|@\w+)'))
-async def start(_, update):
+async def start(client, update):
     chat_id = update.chat.id
     chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
         if update.from_user.username else update.from_user.first_name
@@ -179,12 +179,15 @@ async def start(_, update):
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
 
     date = DateHandler.get_datetime_now()
+    await client.send_chat_action(chat_id, "typing")
     readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
     if readings:
         await send_daily_liturgy(chat_id, readings)
+    await client.send_chat_action(chat_id, "typing")
     homily = util.homiliadodia.HomiliadoDia().obter_homilia()
     if homily:
         await send_daily_liturgy(chat_id, homily)
+    await client.send_chat_action(chat_id, "upload_audio")
     audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
     if audio:
         await send_daily_liturgy_audio(chat_id, audio['path_audio'], audio['date'])
