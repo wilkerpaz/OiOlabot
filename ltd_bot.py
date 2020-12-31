@@ -193,7 +193,7 @@ def stop(_, update):
 
 @bot.on_message(filters.regex(r'^/(ontem|hoje|amanha|dominical|calendario)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def check_button(client, update):
-    audio = None
+    # audio = None
     chat_id = update.chat.id
     chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
         if update.from_user.username else update.from_user.first_name
@@ -217,7 +217,7 @@ def check_button(client, update):
         elif command == '/hoje':
             date = datetime.now()
             readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
-            audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
+            # audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
         elif command == '/amanha':
             date = datetime.now() + timedelta(days=1)
             readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
@@ -236,11 +236,11 @@ def check_button(client, update):
             for message in readings:
                 text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
                 client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
-        if audio:
-            path_audio = '/tmp/homilia_do_dia.aac'
-            date_caption = datetime.now().strftime("%d_%m_%Y") + '\n\nt.me/' + (chat_username or BOT_NAME)
-            caption = "homilia_do_dia_%s" % date_caption
-            bot.send_audio(chat_id, audio=path_audio, caption=caption)
+        # if audio:
+        #     path_audio = '/tmp/homilia_do_dia.aac'
+        #     date_caption = datetime.now().strftime("%d_%m_%Y") + '\n\nt.me/' + (chat_username or BOT_NAME)
+        #     caption = "homilia_do_dia_%s" % date_caption
+        #     bot.send_audio(chat_id, audio=path_audio, caption=caption)
     except RPCError:
         pass
 
