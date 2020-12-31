@@ -240,7 +240,7 @@ def check_button(client, update):
             path_audio = '/tmp/homilia_do_dia.aac'
             date_caption = datetime.now().strftime("%d_%m_%Y") + '\n\nt.me/' + (chat_username or BOT_NAME)
             caption = "homilia_do_dia_%s" % date_caption
-            await bot.send_document(chat_id, document=path_audio, caption=caption)
+            bot.send_document(chat_id, document=path_audio, caption=caption)
     except RPCError:
         pass
 
