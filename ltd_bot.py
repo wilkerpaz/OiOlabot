@@ -158,7 +158,7 @@ def _introduce(client, update):
 
 
 @bot.on_message(filters.regex(r'^/(start|help)($|@\w+)'))
-def start(_, update):
+async def start(_, update):
     chat_id = update.chat.id
     chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
         if update.from_user.username else update.from_user.first_name
@@ -175,7 +175,7 @@ def start(_, update):
 
     db.set_user_daily_liturgy(chat_id=chat_id, chat_name=chat_name, user_id=user_id)
     update.delete()
-    update.reply_text(text=text, quote=False, parse_mode='html', reply_markup=keyboard)
+    await update.reply_text(text=text, quote=False, parse_mode='html', reply_markup=keyboard)
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
 
     date = DateHandler.get_datetime_now()
@@ -184,11 +184,11 @@ def start(_, update):
     audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
 
     if readings:
-        send_daily_liturgy(chat_id, readings)
+        await send_daily_liturgy(chat_id, readings)
     if homily:
-        send_daily_liturgy(chat_id, homily)
+        await send_daily_liturgy(chat_id, homily)
     if audio:
-        send_daily_liturgy_audio(chat_id, audio['path_audio'], audio['caption'])
+        await send_daily_liturgy_audio(chat_id, audio['path_audio'], audio['caption'])
 
 
 @bot.on_message(filters.regex(r'^/(stop)($|@\w+)'))
