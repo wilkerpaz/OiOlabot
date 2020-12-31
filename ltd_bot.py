@@ -188,7 +188,7 @@ async def start(_, update):
     if homily:
         await send_daily_liturgy(chat_id, homily)
     if audio:
-        await send_daily_liturgy_audio(chat_id, audio['path_audio'], audio['caption'])
+        await send_daily_liturgy_audio(chat_id, audio['path_audio'], audio['date'])
 
 
 @bot.on_message(filters.regex(r'^/(stop)($|@\w+)'))
@@ -782,7 +782,7 @@ async def daily_liturgy():
     audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
     if audio:
         for chat_id in chat_id_activated:
-            await send_daily_liturgy_audio(chat_id, audio)
+            await send_daily_liturgy_audio(chat_id, audio['path_audio'], audio['date'])
 
 
 async def send_daily_liturgy(chat_id, readings):
