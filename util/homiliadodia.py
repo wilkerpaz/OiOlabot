@@ -35,7 +35,7 @@ class HomiliadoDia:
         homilia_do_dia_soup = self.html_pagina_soup.find("div", {"class": "entry-content content-homilia"})
         self.homilia_do_dia_texto = homilia_do_dia_soup.text.split("\t\t")[0].strip()  # Texto da homilia
 
-        return [f'{self.homilia_do_dia_titulo}.\n{self.homilia_do_dia_texto}']
+        return [f'Reflexão do dia.\n{self.homilia_do_dia_titulo}.\n\n{self.homilia_do_dia_texto}']
 
     def obter_arquivo_audio(self):
         audio_play_info = None

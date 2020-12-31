@@ -61,7 +61,7 @@ class BuscarLiturgia():
         liturgia_do_dia = requests.get(url)
         liturgia_do_dia_soup = BeautifulSoup(liturgia_do_dia.text, "lxml")
 
-        dia_liturgia = liturgia_do_dia_soup.find("meta", {"property": "og:title"})["content"]
+        dia_liturgia = liturgia_do_dia_soup.find("meta", {"property": "og:title"})["content"].split(' | ')[0]
         leituras = liturgia_do_dia_soup.find_all("div", {"id": re.compile(r"liturgia-\d")})
 
         self.leituras_lista = []
