@@ -10,4 +10,5 @@ python-decouple==3.3
 pytz==2020.5
 redis==3.5.3
 requests==2.25.1
+streamlink==2.0.0
 TgCrypto==1.2.2

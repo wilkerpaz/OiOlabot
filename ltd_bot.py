@@ -1,7 +1,6 @@
 import logging
-from html import escape
-
 from datetime import datetime, timedelta
+from html import escape
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
@@ -9,8 +8,9 @@ from pyrogram import Client, filters, emoji
 from pyrogram.errors import RPCError
 from pyrogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 
-from util.database_daily_liturgy import DatabaseHandler
+import util.homiliadodia
 from util import calendar
+from util.database_daily_liturgy import DatabaseHandler
 from util.datehandler import DateHandler
 from util.feedhandler import FeedHandler
 from util.liturgiadiaria import BuscarLiturgia
@@ -161,7 +161,7 @@ def _introduce(client, update):
 def start(_, update):
     chat_id = update.chat.id
     chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
-                if update.from_user.username else update.from_user.first_name
+        if update.from_user.username else update.from_user.first_name
     chat_title = update.chat.title or update.from_user.first_name
     user_id = update.from_user.id
     text = 'Vou te enviar a liturgia todos os dias\n\n' \
@@ -193,10 +193,10 @@ def stop(_, update):
 
 @bot.on_message(filters.regex(r'^/(ontem|hoje|amanha|dominical|calendario)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def check_button(client, update):
-
+    audio = None
     chat_id = update.chat.id
     chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
-                if update.from_user.username else update.from_user.first_name
+        if update.from_user.username else update.from_user.first_name
     user_id = update.from_user.id
 
     if chat_id < 0:
@@ -217,6 +217,7 @@ def check_button(client, update):
         elif command == '/hoje':
             date = datetime.now()
             readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+            audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
         elif command == '/amanha':
             date = datetime.now() + timedelta(days=1)
             readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
@@ -229,13 +230,17 @@ def check_button(client, update):
             calendar_keyboard = calendar.create_calendar()
             client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=calendar_keyboard)
 
+        chat = update.chat
+        chat_username = chat.username if (chat.username and chat.type != 'private') else None
         if readings:
-            chat = update.chat
-            chat_username = chat.username if (chat.username and chat.type != 'private') else None
-
             for message in readings:
                 text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
                 client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
+        if audio:
+            path_audio = '/tmp/homilia_do_dia.aac'
+            date_caption = datetime.now().strftime("%d_%m_%Y") + '\n\nt.me/' + (chat_username or BOT_NAME)
+            caption = "homilia_do_dia_%s" % date_caption
+            await bot.send_document(chat_id, document=path_audio, caption=caption)
     except RPCError:
         pass
 
@@ -753,20 +758,45 @@ async def daily_liturgy():
     date = DateHandler.get_datetime_now()
     readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
     if readings:
-        for chat_id in db.get_chat_id_activated():
-            send_message = False
-            try:
-                chat = await bot.get_chat(chat_id=str(chat_id))
-                chat_username = chat.username if (chat.username and chat.type != 'private') else None
-                for message in readings:
-                    text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
-                    await bot.send_message(chat_id, text, disable_web_page_preview=True)
-                    send_message = True
-            except RPCError as _:
-                errors(chat_id)
+        await send_daily_liturgy(readings)
 
-            if send_message:
-                db.set_last_send_daily_liturgy(chat_id)
+    homily = util.homiliadodia.HomiliadoDia().obter_homilia()
+    if homily:
+        await send_daily_liturgy(homily)
+
+    audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
+    if audio:
+        audio_homily = '/tmp/homilia_do_dia.aac'
+        await send_daily_liturgy_audio(audio_homily)
+
+
+async def send_daily_liturgy(readings):
+    for chat_id in db.get_chat_id_activated():
+        send_message = False
+        try:
+            chat = await bot.get_chat(chat_id=str(chat_id))
+            chat_username = chat.username if (chat.username and chat.type != 'private') else None
+            for message in readings:
+                text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
+                await bot.send_message(chat_id, text, disable_web_page_preview=True)
+                send_message = True
+        except RPCError as _:
+            errors(chat_id)
+
+        if send_message:
+            db.set_last_send_daily_liturgy(chat_id)
+
+
+async def send_daily_liturgy_audio(path_audio):
+    for chat_id in db.get_chat_id_activated():
+        try:
+            chat = await bot.get_chat(chat_id=str(chat_id))
+            chat_username = chat.username if (chat.username and chat.type != 'private') else None
+            caption = "homilia_do_dia_%s" % datetime.now().strftime("%d_%m_%Y") + '\n\nt.me/' + (
+                        chat_username or BOT_NAME)
+            await bot.send_document(chat_id, document=path_audio, caption=caption)
+        except RPCError as _:
+            errors(chat_id)
 
 
 def errors(chat_id):
