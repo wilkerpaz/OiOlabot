@@ -806,7 +806,7 @@ async def send_daily_liturgy_audio(chat_id, path_audio, date):
         chat = await bot.get_chat(chat_id=str(chat_id))
         chat_username = chat.username if (chat.username and chat.type != 'private') else None
         caption = date + '\n\nt.me/' + (chat_username or BOT_NAME)
-        await bot.send_audio(chat_id, audio=path_audio, caption=caption, file_name=f'{date}.mp3', title=date)
+        await bot.send_audio(chat_id, audio=path_audio, caption=caption, file_name=f'{date}.aac', title=date)
     except RPCError as _:
         errors(chat_id)
 
