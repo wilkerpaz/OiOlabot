@@ -110,7 +110,7 @@ class HomiliadoDia:
                 subprocess.run([ffmpeg, "-i", self.audio_ts, "-c", "copy", self.audio_aac, "-loglevel", "quiet"])
                 os.remove(self.audio_ts)
                 if os.path.isfile(self.audio_aac):
-                    return True
+                    return self.audio_aac
 
 
 # homilia_do_dia = HomiliadoDia()
