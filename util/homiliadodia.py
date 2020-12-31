@@ -17,13 +17,11 @@ class HomiliadoDia:
     def __init__(self):
         # hoje = datetime.now()
         # titulo_arquivo = "homilia_do_dia_%s" % hoje.strftime("%d_%m_%Y")
-        titulo_arquivo = "homilia_do_dia"
-
+        self.date = format_date(datetime.now().date(), format='full', locale='pt_br')
 
         # O arquivo será salvo em /tmp/
-        self.date = format_date(datetime.now().date(), format='full', locale='pt_br')
-        self.audio_ts = "/tmp/%s.ts" % titulo_arquivo
-        self.audio_aac = "/tmp/%s.aac" % titulo_arquivo
+        self.audio_ts = "/tmp/%s.ts" % self.date
+        self.audio_aac = "/tmp/%s.aac" % self.date
         self.homilia_do_dia_titulo = None
         self.homilia_do_dia_texto = None
         self.url_audio_embed = None
