@@ -103,9 +103,11 @@ class HomiliadoDia:
                     os.remove(self.audio_aac)
 
                 # Download do arquivo usando o streamlink (por ser mais rápido que o ffmpeg no download)
-                subprocess.run(["streamlink", m3u8_url_streamlink, "best", "-o", self.audio_ts, "--quiet"])
+                streamlink = '/nix/store/vlr51lb5pqvxyr951506bl1xbnnpkc71-home-manager-path/bin/streamlink'
+                subprocess.run([streamlink, m3u8_url_streamlink, "best", "-o", self.audio_ts, "--quiet"])
                 # Conversão e fix do arquivo para aac
-                subprocess.run(["ffmpeg", "-i", self.audio_ts, "-c", "copy", self.audio_aac, "-loglevel", "quiet"])
+                ffmpeg = '/nix/store/vlr51lb5pqvxyr951506bl1xbnnpkc71-home-manager-path/bin/ffmpeg'
+                subprocess.run([ffmpeg, "-i", self.audio_ts, "-c", "copy", self.audio_aac, "-loglevel", "quiet"])
                 os.remove(self.audio_ts)
                 if os.path.isfile(self.audio_aac):
                     return True
