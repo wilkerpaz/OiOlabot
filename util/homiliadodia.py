@@ -1,3 +1,4 @@
+import glob
 import json
 import re
 import uuid
@@ -41,6 +42,12 @@ class HomiliadoDia:
         return [f'{self.date}\n{self.homilia_do_dia_titulo}.\n\nReflexão do dia.\n{self.homilia_do_dia_texto}']
 
     def obter_arquivo_audio(self):
+        if os.path.isfile(self.audio_aac):
+            return {'date': self.date, 'path_audio': self.audio_aac}
+
+        for archive in glob.glob('/tmp/*.aac'):
+            os.remove(archive)
+
         audio_play_info = None
         html_embed = requests.get(self.url_audio_embed)
         html_embed_soup = BeautifulSoup(html_embed.text, "lxml").find("iframe")["src"]
