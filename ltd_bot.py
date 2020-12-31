@@ -813,6 +813,20 @@ async def send_daily_liturgy_audio(chat_id, path_audio, date):
         errors(chat_id)
 
 
+@bot.on_message(filters.regex(r'^/(deactivated)(\s|$|@\w+)'))
+def users_deactivated(_, update):
+    number_user = len(db.get_name_chat_id_deactivated())
+    text = f'Existem {number_user} inativos no momento.'
+    update.reply_text(text=text, quote=False, parse_mode='html')
+
+
+@bot.on_message(filters.regex(r'^/(activated)(\s|$|@\w+)'))
+def users_activated(_, update):
+    number_user = len(db.get_chat_id_activated())
+    text = f'Existem {number_user} ativos no momento.'
+    update.reply_text(text=text, quote=False, parse_mode='html')
+
+
 def errors(chat_id):
     """ Error handling """
     try:
