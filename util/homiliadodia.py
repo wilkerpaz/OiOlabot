@@ -7,6 +7,8 @@ import subprocess
 import os
 
 import requests
+from babel.dates import format_date
+from datetime import datetime
 from bs4 import BeautifulSoup
 
 
@@ -18,6 +20,7 @@ class HomiliadoDia:
 
 
         # O arquivo será salvo em /tmp/
+        self.date = format_date(datetime.now().date(), format='full', locale='pt_br')
         self.audio_ts = "/tmp/%s.ts" % titulo_arquivo
         self.audio_aac = "/tmp/%s.aac" % titulo_arquivo
         self.homilia_do_dia_titulo = None
@@ -35,7 +38,7 @@ class HomiliadoDia:
         homilia_do_dia_soup = self.html_pagina_soup.find("div", {"class": "entry-content content-homilia"})
         self.homilia_do_dia_texto = homilia_do_dia_soup.text.split("\t\t")[0].strip()  # Texto da homilia
 
-        return [f'Reflexão do dia.\n{self.homilia_do_dia_titulo}.\n\n{self.homilia_do_dia_texto}']
+        return [f'{self.date}\n{self.homilia_do_dia_titulo}.\nReflexão do dia.\n\n{self.homilia_do_dia_texto}']
 
     def obter_arquivo_audio(self):
         audio_play_info = None
@@ -110,7 +113,7 @@ class HomiliadoDia:
                 subprocess.run([ffmpeg, "-i", self.audio_ts, "-c", "copy", self.audio_aac, "-loglevel", "quiet"])
                 os.remove(self.audio_ts)
                 if os.path.isfile(self.audio_aac):
-                    return self.audio_aac
+                    return {'date': self.date, 'path_audio': self.audio_aac}
 
 
 # homilia_do_dia = HomiliadoDia()

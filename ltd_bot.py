@@ -188,7 +188,7 @@ def start(_, update):
     if homily:
         await send_daily_liturgy(chat_id, homily)
     if audio:
-        await send_daily_liturgy_audio(chat_id, audio)
+        await send_daily_liturgy_audio(chat_id, audio['path_audio'], audio['caption'])
 
 
 @bot.on_message(filters.regex(r'^/(stop)($|@\w+)'))
@@ -801,13 +801,12 @@ async def send_daily_liturgy(chat_id, readings):
         db.set_last_send_daily_liturgy(chat_id)
 
 
-async def send_daily_liturgy_audio(chat_id, path_audio):
+async def send_daily_liturgy_audio(chat_id, path_audio, caption):
     try:
         chat = await bot.get_chat(chat_id=str(chat_id))
         chat_username = chat.username if (chat.username and chat.type != 'private') else None
-        caption = "homilia_do_dia_%s" % datetime.now().strftime("%d_%m_%Y") + '\n\nt.me/' + (
-                    chat_username or BOT_NAME)
-        await bot.send_audio(chat_id, audio=path_audio, caption=caption)
+        caption = caption + '\n\nt.me/' + (chat_username or BOT_NAME)
+        await bot.send_audio(chat_id, audio=path_audio, caption=caption, file_name=caption, title=caption)
     except RPCError as _:
         errors(chat_id)
 
