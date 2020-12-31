@@ -801,12 +801,12 @@ async def send_daily_liturgy(chat_id, readings):
         db.set_last_send_daily_liturgy(chat_id)
 
 
-async def send_daily_liturgy_audio(chat_id, path_audio, caption):
+async def send_daily_liturgy_audio(chat_id, path_audio, date):
     try:
         chat = await bot.get_chat(chat_id=str(chat_id))
         chat_username = chat.username if (chat.username and chat.type != 'private') else None
-        caption = caption + '\n\nt.me/' + (chat_username or BOT_NAME)
-        await bot.send_audio(chat_id, audio=path_audio, caption=caption, file_name=caption, title=caption)
+        caption = date + '\n\nt.me/' + (chat_username or BOT_NAME)
+        await bot.send_audio(chat_id, audio=path_audio, caption=caption, file_name=f'{date}.mp3', title=date)
     except RPCError as _:
         errors(chat_id)
 
