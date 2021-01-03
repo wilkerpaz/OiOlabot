@@ -174,7 +174,7 @@ async def start(client, update):
            '/help - exibe esta mensagem.'
 
     db.set_user_daily_liturgy(chat_id=chat_id, chat_name=chat_name, user_id=user_id)
-    update.delete()
+    await update.delete()
     await update.reply_text(text=text, quote=False, parse_mode='html', reply_markup=keyboard)
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
 
