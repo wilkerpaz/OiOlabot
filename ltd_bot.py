@@ -442,7 +442,7 @@ def command_control(client, update, command):
 def get_chat_by_username(client, update, user_name=None):
     try:
         if user_name:
-            user_name = user_name if user_name[0] == '@' else '@' + str(user_name)
+            user_name = user_name if user_name[0] == '@' or int(user_name) else '@' + str(user_name)
         chat_id = update.chat.id if not user_name else user_name
         get_chat = client.get_chat(chat_id=chat_id)
     except RPCError as _:
