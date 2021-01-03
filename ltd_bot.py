@@ -442,7 +442,7 @@ def command_control(client, update, command):
 def get_chat_by_username(client, update, user_name=None):
     try:
         if user_name:
-            user_name = user_name if user_name[0] == '@' or not ValueError(int(user_name)) else '@' + str(user_name)
+            user_name = user_name if user_name[0] == '@' or is_integer(user_name) else '@' + str(user_name)
         chat_id = update.chat.id if not user_name else user_name
         get_chat = client.get_chat(chat_id=chat_id)
     except RPCError as _:
@@ -834,6 +834,14 @@ def errors(chat_id):
         logger.error(f'disable chat_id {chat_id} from chat list daily liturgy')
     except ValueError as _:
         logger.error(f"error ValueError {str(_)}")
+
+def is_integer(n):
+    try:
+        float(n)
+    except ValueError:
+        return False
+    else:
+        return float(n).is_integer()
 
 
 # Start Bot
