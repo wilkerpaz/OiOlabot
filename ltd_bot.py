@@ -859,7 +859,7 @@ def users_activated(_, update):
     update.reply_text(text=text, quote=False, parse_mode='html')
 
 
-@bot.on_message(filters.regex(r'^/userinfodailyliturgy(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
+@bot.on_message(filters.regex(r'^/(userinfodailyliturgy)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def get_user_info(_, update):
     # command = str(update.matches[0][0][1:].split('@', 1)[0]).strip().split(' ')[0]
     args = update.matches[0]['text'] if update.matches else None
