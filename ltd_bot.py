@@ -699,6 +699,22 @@ def activate_all_urls(_, update):
     update.reply_text(text=text, quote=False, parse_mode='html')
 
 
+@bot.on_message(filters.regex(r'^/(activateallliturgy)(\s|$|@\w+)'))
+def activate_all_liturgy(_, update):
+    """
+    Displays a list of all user subscriptions
+    """
+    chat_id = update.chat.id
+
+    # _check admin privilege and group context
+    if str(chat_id) not in db.list_admins():
+        return
+
+    db.activated_all_chat_id()
+    text = 'Got it!'
+    update.reply_text(text=text, quote=False, parse_mode='html')
+
+
 @bot.on_message(filters.regex(r'^/(allurl)(\s|$|@\w+)'))
 def all_url(_, update):
     """
@@ -799,11 +815,12 @@ async def daily_liturgy():
     audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
     if audio:
         send = await send_daily_liturgy_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
-        if send:
-            db.del_names(['audio_liturgy'])
-            db.set_name_key('audio_liturgy', {date_full: send.audio.file_id})
-            for chat_id in chat_id_activated:
-                await send_daily_liturgy_audio(chat_id, send.audio.file_id, audio['date'])
+        path_audio = send.audio.file_id
+        db.del_names(['audio_liturgy'])
+        db.set_name_key('audio_liturgy', {date_full: path_audio})
+        for chat_id in chat_id_activated:
+            logger.error(f"{path_audio}")
+            await send_daily_liturgy_audio(chat_id, path_audio, audio['date'])
 
 
 async def send_daily_liturgy(chat_id, readings):
