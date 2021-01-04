@@ -194,9 +194,9 @@ class DatabaseHandler(object):
         for name in names:
             mapping = {}
             keys = self.get_all_keys_for_name(name)
-            mapping['chat_id'] = keys.get('chat_id')
+            # mapping['chat_id'] = keys.get('chat_id')
             mapping['chat_name'] = keys.get('chat_name')
-            mapping['user_id'] = keys.get('user_id')
+            # mapping['user_id'] = keys.get('user_id')
             mapping['disable'] = keys.get('disable')
             mapping['last_send'] = keys.get('last_send')
 
