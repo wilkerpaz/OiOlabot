@@ -120,6 +120,54 @@ class DatabaseHandler(object):
         else:
             return False
 
+    '''return info about last update url'''
+    def get_update_url(self, url):
+        name = 'url:^' + str(url) + '^'
+        if self.exist_name(name):
+            keys = self.get_all_keys_for_name(name)
+            last_update = keys.get('last_update')
+            last_url = keys.get('last_url')
+            return {'last_update': last_update, 'last_url': last_url}
+        return False
+
+    @staticmethod
+    def extract_url_from_names(names):
+        if names:
+            uncompress_name = [name.split('^') for name in names]
+            urls = sorted(set(['{}'.format(url[1]) for url in uncompress_name]))
+            return urls
+        return ()
+
+    '''return all url for a chat_id'''
+    def get_chat_urls(self, user_id):
+        names = self._find('user_url:' + str(user_id) + ':*')
+        chat_urls = []
+        for name in names:
+            keys = self.get_all_keys_for_name(name)
+            chat_id = keys.get('chat_id')
+            chat_name = keys.get('chat_name')
+            user_id = keys.get('user_id')
+            url = self.extract_url_from_names([name])[0]
+
+            mapping = {'user_id': str(user_id), 'chat_name': chat_name, 'url': url, 'chat_id': str(chat_id)}
+            chat_urls.append(mapping)
+        return chat_urls
+
+    '''return all urls activated'''
+    def get_urls_activated(self):
+        active_keys = self.get_name_urls_activated()
+        return self.extract_url_from_names(active_keys)
+
+    '''return all url deactivated'''
+    def get_name_urls_activated(self, url=None):
+        names = self._find('user_url*') if not url else self._find('user_url*' + url + '*')
+        return sorted(set([name for name in names if self.get_value_name_key(name, 'disable') == 'False']))
+
+    '''return all url deactivated'''
+    def get_name_urls_deactivated(self):
+        names = self._find('user_url*')
+        return sorted(set([name for name in names if self.get_value_name_key(name, 'disable') == 'True']))
+
     '''register a url for user or group'''
     def set_user_daily_liturgy(self, chat_id, chat_name, user_id):
         name = 'daily_liturgy:user_id:' + str(user_id) + ':chat_id:' + str(chat_id)
@@ -138,16 +186,6 @@ class DatabaseHandler(object):
             return True if self.set_name_key(name=name, mapping=mapping) else False
         else:
             return False
-
-    '''return info about last update url'''
-    def get_update_url(self, url):
-        name = 'url:^' + str(url) + '^'
-        if self.exist_name(name):
-            keys = self.get_all_keys_for_name(name)
-            last_update = keys.get('last_update')
-            last_url = keys.get('last_url')
-            return {'last_update': last_update, 'last_url': last_url}
-        return False
 
     '''return user info daily liturgy'''
     def get_chat_info_daily_liturgy(self, chat_id):
@@ -174,53 +212,15 @@ class DatabaseHandler(object):
             return chat_id
         return ()
 
-    @staticmethod
-    def extract_url_from_names(names):
-        if names:
-            uncompress_name = [name.split('^') for name in names]
-            urls = sorted(set(['{}'.format(url[1]) for url in uncompress_name]))
-            return urls
-        return ()
-
-    '''return all url for a chat_id'''
-    def get_chat_urls(self, user_id):
-        names = self._find('user_url:' + str(user_id) + ':*')
-        chat_urls = []
-        for name in names:
-            keys = self.get_all_keys_for_name(name)
-            chat_id = keys.get('chat_id')
-            chat_name = keys.get('chat_name')
-            user_id = keys.get('user_id')
-            url = self.extract_url_from_names([name])[0]
-
-            mapping = {'user_id': str(user_id), 'chat_name': chat_name, 'url': url, 'chat_id': str(chat_id)}
-            chat_urls.append(mapping)
-        return chat_urls
-
-    '''return names for key not 'disable' == 'False'''
-    def get_names_for_chat_id_activated(self):
-        names = self._find('daily_liturgy*')
-        return sorted(set([name for name in names if not self.get_value_name_key(name, 'disable') == 'True']))
-
     '''return all chat_id activated'''
     def get_chat_id_activated(self):
-        active_keys = self.get_names_for_chat_id_activated()
+        active_keys = self.get_name_chat_id_activated()
         return self.extract_chat_id_from_names(active_keys)
 
-    '''return all urls activated'''
-    def get_urls_activated(self):
-        active_keys = self.get_name_urls_activated()
-        return self.extract_url_from_names(active_keys)
-
-    '''return all url deactivated'''
-    def get_name_urls_activated(self, url=None):
-        names = self._find('user_url*') if not url else self._find('user_url*' + url + '*')
-        return sorted(set([name for name in names if self.get_value_name_key(name, 'disable') == 'False']))
-
-    '''return all url deactivated'''
-    def get_name_urls_deactivated(self):
-        names = self._find('user_url*')
-        return sorted(set([name for name in names if self.get_value_name_key(name, 'disable') == 'True']))
+    '''return names for key not 'disable' == 'False'''
+    def get_name_chat_id_activated(self):
+        names = self._find('daily_liturgy*')
+        return sorted(set([name for name in names if not self.get_value_name_key(name, 'disable') == 'True']))
 
     '''return names for key 'disable' == 'False'''
     def get_name_chat_id_deactivated(self):

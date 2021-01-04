@@ -1,6 +1,5 @@
 import logging
-import os
-import time
+
 from datetime import datetime, timedelta
 from html import escape
 
@@ -17,9 +16,6 @@ from util.database_daily_liturgy import DatabaseHandler
 from util.datehandler import DateHandler
 from util.feedhandler import FeedHandler
 from util.liturgiadiaria import BuscarLiturgia
-
-# os.environ['TZ'] = config('TZ')
-# time.tzset()
 
 LOG = config('LOG')
 logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
@@ -794,7 +790,7 @@ def error(_):
 
 
 @bot.on_message(filters.regex(r'^/(test)(\s|$|@\w+)'))
-async def test(_, update):
+async def test(client, update):
     await daily_liturgy()
 
 
@@ -861,6 +857,30 @@ def users_activated(_, update):
     number_user = len(db.get_chat_id_activated())
     text = f'Existem {number_user} ativos no momento.'
     update.reply_text(text=text, quote=False, parse_mode='html')
+
+
+@bot.on_message(filters.regex(r'^/userinfodailyliturgy(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
+def get_user_info(_, update):
+    # command = str(update.matches[0][0][1:].split('@', 1)[0]).strip().split(' ')[0]
+    args = update.matches[0]['text'] if update.matches else None
+
+    if update.chat.id > 0:
+        return
+
+    if args == 'deactivated':
+        chat_ids = db.get_name_chat_id_deactivated()
+    else:
+        chat_ids = db.get_name_chat_id_activated()
+
+    for chat_id in chat_ids:
+        get_chat = db.get_chat_info_daily_liturgy(chat_id)
+
+        if get_chat:
+            get_chat['id'] = f"<code>{get_chat['id']} </code>"
+            text = '\n'.join(f'{k}: {v}' for k, v in get_chat.items())
+
+            if text:
+                update.reply_text(text=text, quote=False, parse_mode='html')
 
 
 def errors(chat_id):
