@@ -819,7 +819,6 @@ async def daily_liturgy():
         db.del_names(['audio_liturgy'])
         db.set_name_key('audio_liturgy', {date_full: path_audio})
         for chat_id in chat_id_activated:
-            logger.error(f"{path_audio}")
             await send_daily_liturgy_audio(chat_id, path_audio, audio['date'])
 
 
