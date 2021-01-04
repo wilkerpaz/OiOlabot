@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from html import escape
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from babel.dates import format_date
 from decouple import config
 from pyrogram import Client, filters, emoji
 from pyrogram.errors import RPCError
@@ -179,18 +180,21 @@ async def start(client, update):
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
 
     date = DateHandler.get_datetime_now()
+    date_full = format_date(date.date(), format='full', locale='pt_br')
     await client.send_chat_action(chat_id, "typing")
     readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
     if readings:
         await send_daily_liturgy(chat_id, readings)
     await client.send_chat_action(chat_id, "typing")
-    homily = util.homiliadodia.HomiliadoDia().obter_homilia()
-    if homily:
-        await send_daily_liturgy(chat_id, homily)
-    await client.send_chat_action(chat_id, "upload_audio")
-    audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
-    if audio:
-        await send_daily_liturgy_audio(chat_id, audio['path_audio'], audio['date'])
+
+    audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
+    if audio_telegram:
+        homily = util.homiliadodia.HomiliadoDia().obter_homilia()
+        if homily:
+            await send_daily_liturgy(chat_id, homily)
+        await client.send_chat_action(chat_id, "upload_audio")
+        if audio_telegram:
+            await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
 
 
 @bot.on_message(filters.regex(r'^/(stop)($|@\w+)'))
@@ -768,8 +772,14 @@ def error(_):
     logger.error(f"def error {_}")
 
 
+@bot.on_message(filters.regex(r'^/(test)(\s|$|@\w+)'))
+async def test(_, update):
+    await daily_liturgy()
+
+
 async def daily_liturgy():
     date = DateHandler.get_datetime_now()
+    date_full = format_date(date.date(), format='full', locale='pt_br')
     readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
     chat_id_activated = db.get_chat_id_activated()
     if readings:
@@ -783,8 +793,11 @@ async def daily_liturgy():
 
     audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
     if audio:
+        send = await send_daily_liturgy_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
+        db.del_names(['audio_liturgy'])
+        db.set_name_key('audio_liturgy', {date_full: send.audio.file_id})
         for chat_id in chat_id_activated:
-            await send_daily_liturgy_audio(chat_id, audio['path_audio'], audio['date'])
+            await send_daily_liturgy_audio(chat_id, send.audio.file_id, audio['date'])
 
 
 async def send_daily_liturgy(chat_id, readings):
@@ -808,7 +821,8 @@ async def send_daily_liturgy_audio(chat_id, path_audio, date):
         chat = await bot.get_chat(chat_id=str(chat_id))
         chat_username = chat.username if (chat.username and chat.type != 'private') else None
         caption = date + '\n\nt.me/' + (chat_username or BOT_NAME)
-        await bot.send_audio(chat_id, audio=path_audio, caption=caption, file_name=f'{date}.aac', title=date)
+        send = await bot.send_audio(chat_id, audio=path_audio, caption=caption, file_name=f'{date}.aac', title=date)
+        return send
     except RPCError as _:
         errors(chat_id)
 
@@ -834,6 +848,7 @@ def errors(chat_id):
         logger.error(f'disable chat_id {chat_id} from chat list daily liturgy')
     except ValueError as _:
         logger.error(f"error ValueError {str(_)}")
+
 
 def is_integer(n):
     try:
