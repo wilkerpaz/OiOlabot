@@ -864,7 +864,7 @@ def get_user_info(_, update):
     # command = str(update.matches[0][0][1:].split('@', 1)[0]).strip().split(' ')[0]
     args = update.matches[0]['text'] if update.matches else None
 
-    if update.chat.id > 0:
+    if update.chat.id < 0:
         return
 
     if args == 'deactivated':
