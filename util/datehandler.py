@@ -1,6 +1,13 @@
+import os
+import time
+
 import pytz
 import datetime
 from dateutil import parser
+from decouple import config
+
+os.environ['TZ'] = config('TZ')
+time.tzset()
 
 
 class DateHandler:

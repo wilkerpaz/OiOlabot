@@ -1,4 +1,6 @@
 import logging
+import os
+import time
 from datetime import datetime, timedelta
 from html import escape
 
@@ -15,6 +17,9 @@ from util.database_daily_liturgy import DatabaseHandler
 from util.datehandler import DateHandler
 from util.feedhandler import FeedHandler
 from util.liturgiadiaria import BuscarLiturgia
+
+# os.environ['TZ'] = config('TZ')
+# time.tzset()
 
 LOG = config('LOG')
 logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
