@@ -217,6 +217,11 @@ class DatabaseHandler(object):
         active_keys = self.get_name_chat_id_activated()
         return self.extract_chat_id_from_names(active_keys)
 
+    '''return all chat_id activated'''
+    def get_chat_id_deactivated(self):
+        active_keys = self.get_name_chat_id_deactivated()
+        return self.extract_chat_id_from_names(active_keys)
+
     '''return names for key not 'disable' == 'False'''
     def get_name_chat_id_activated(self):
         names = self._find('daily_liturgy*')

@@ -859,25 +859,24 @@ def users_activated(_, update):
     update.reply_text(text=text, quote=False, parse_mode='html')
 
 
-@bot.on_message(filters.regex(r'^/(userinfodailyliturgy)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
+@bot.on_message(filters.regex(r'^/(userinfoliturgy)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def get_user_info(_, update):
     # command = str(update.matches[0][0][1:].split('@', 1)[0]).strip().split(' ')[0]
     args = update.matches[0]['text'] if update.matches else None
 
-    if update.chat.id < 0:
+    if int(update.chat.id) < 0:
         return
 
     if args == 'deactivated':
-        chat_ids = db.get_name_chat_id_deactivated()
+        chat_ids = db.get_chat_id_deactivated()
     else:
-        chat_ids = db.get_name_chat_id_activated()
+        chat_ids = db.get_chat_id_activated()
 
     for chat_id in chat_ids:
-        get_chat = db.get_chat_info_daily_liturgy(chat_id)
+        get_chat = db.get_chat_info_daily_liturgy(chat_id)[0]
 
         if get_chat:
-            get_chat['id'] = f"<code>{get_chat['id']} </code>"
-            text = '\n'.join(f'{k}: {v}' for k, v in get_chat.items())
+            text = '\n'.join(f'{k}: <code>{v}</code>' for k, v in get_chat.items())
 
             if text:
                 update.reply_text(text=text, quote=False, parse_mode='html')
