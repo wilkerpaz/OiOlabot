@@ -193,6 +193,7 @@ async def start(client, update):
     await client.send_chat_action(chat_id, "typing")
 
     audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
+    logger.error(f'{audio_telegram} {date_full}')
     if audio_telegram:
         homily = util.homiliadodia.HomiliadoDia().obter_homilia()
         if homily:
