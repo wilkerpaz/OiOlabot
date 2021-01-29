@@ -657,12 +657,23 @@ def remove_url(client, update):
 
 
 '''FUNÇÕES CONTRLE ADM BANCO DE DADOS'''
+admin_text = 'Commands:\n\n' \
+             '/deactivatedurl - list of all keys for users disable\n' \
+             '/activateallurl - Activate all url for users\n' \
+             '/activateallliturgy - Activate all user for receive the daily liturgy\n' \
+             '/allurl - List info about all url\n' \
+             '/getkey - Search all keys for args\n' \
+             '/removekey - Remove key in data base\n' \
+             '/senddailyliturgy - Send daily liturgy for all users active' \
+             '/activated - Send info about the number of users activated' \
+             '/deactivated - Send info about the number of users deactivated' \
+             '/userinfoliturgy - Send info about users daily liturgy'
 
 
 @bot.on_message(filters.regex(r'^/(deactivatedurl)(\s|$|@\w+)'))
 def list_url_deactivated(_, update):
     """
-    Displays a list of all user subscriptions
+    Displays a list of all names for users disable
     """
     chat_id = update.chat.id
 
@@ -682,7 +693,7 @@ def list_url_deactivated(_, update):
 @bot.on_message(filters.regex(r'^/(activateallurl)(\s|$|@\w+)'))
 def activate_all_urls(_, update):
     """
-    Displays a list of all user subscriptions
+    Activate all url for users
     """
     chat_id = update.chat.id
 
@@ -698,7 +709,7 @@ def activate_all_urls(_, update):
 @bot.on_message(filters.regex(r'^/(activateallliturgy)(\s|$|@\w+)'))
 def activate_all_liturgy(_, update):
     """
-    Displays a list of all user subscriptions
+    Activate all user for receive the daily liturgy
     """
     chat_id = update.chat.id
 
@@ -714,7 +725,7 @@ def activate_all_liturgy(_, update):
 @bot.on_message(filters.regex(r'^/(allurl)(\s|$|@\w+)'))
 def all_url(_, update):
     """
-    Displays a list of all user subscriptions
+    List info about all url
     """
     chat_id = update.chat.id
 
@@ -737,6 +748,9 @@ def all_url(_, update):
 
 @bot.on_message(filters.regex(r'^/(getkey)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def get_key(_, update):
+    """
+    Search all keys for args
+    """
     args = update.matches[0]['text'].strip().split(' ')
     chat_id = update.chat.id
 
@@ -753,6 +767,9 @@ def get_key(_, update):
 
 @bot.on_message(filters.regex(r'^/(removekey)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def remove_key(_, update):
+    """
+    Remove key in data base
+    """
     args = update.matches[0]['text'].strip().split(' ')
     chat_id = update.chat.id
 
@@ -789,8 +806,14 @@ def error(_):
     logger.error(f"def error {_}")
 
 
-@bot.on_message(filters.regex(r'^/(test)(\s|$|@\w+)'))
-async def test(client, update):
+@bot.on_message(filters.regex(r'^/(senddailylitugy)(\s|$|@\w+)'))
+async def send_daily_liturgy_all_users(_client, update):
+    """
+    Send daily liturgy for all users active
+    """
+    chat_id = update.chat.id
+    if str(chat_id) not in db.list_admins():
+        return
     await daily_liturgy()
 
 
@@ -847,6 +870,9 @@ async def send_daily_liturgy_audio(chat_id, path_audio, date):
 
 @bot.on_message(filters.regex(r'^/(deactivated)(\s|$|@\w+)'))
 def users_deactivated(_, update):
+    """
+    Send info about the number of users deactivated
+    """
     number_user = len(db.get_name_chat_id_deactivated())
     text = f'Existem {number_user} inativos no momento.'
     update.reply_text(text=text, quote=False, parse_mode='html')
@@ -854,6 +880,9 @@ def users_deactivated(_, update):
 
 @bot.on_message(filters.regex(r'^/(activated)(\s|$|@\w+)'))
 def users_activated(_, update):
+    """
+    Send info about the number of users activated
+    """
     number_user = len(db.get_chat_id_activated())
     text = f'Existem {number_user} ativos no momento.'
     update.reply_text(text=text, quote=False, parse_mode='html')
@@ -861,8 +890,15 @@ def users_activated(_, update):
 
 @bot.on_message(filters.regex(r'^/(userinfoliturgy)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def get_user_info(_, update):
+    """
+    userinfoliturgy - Send info about users daily liturgy
+    """
     # command = str(update.matches[0][0][1:].split('@', 1)[0]).strip().split(' ')[0]
     args = update.matches[0]['text'] if update.matches else None
+
+    chat_id = update.chat.id
+    if str(chat_id) not in db.list_admins():
+        return
 
     if int(update.chat.id) < 0:
         return
@@ -898,6 +934,17 @@ def is_integer(n):
         return False
     else:
         return float(n).is_integer()
+
+
+@bot.on_message(filters.regex(r'^/(admin)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
+def admin(_, update):
+    """
+    Send admin commands
+    """
+    chat_id = update.chat.id
+    if str(chat_id) not in db.list_admins():
+        return
+    update.reply_text(text=admin_text, quote=False, parse_mode='html')
 
 
 # Start Bot
