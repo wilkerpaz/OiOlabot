@@ -664,9 +664,9 @@ admin_text = 'Commands:\n\n' \
              '/allurl - List info about all url\n' \
              '/getkey - Search all keys for args\n' \
              '/removekey - Remove key in data base\n' \
-             '/senddailyliturgy - Send daily liturgy for all users active' \
-             '/activated - Send info about the number of users activated' \
-             '/deactivated - Send info about the number of users deactivated' \
+             '/senddailyliturgy - Send daily liturgy for all users active\n' \
+             '/activated - Send info about the number of users activated\n' \
+             '/deactivated - Send info about the number of users deactivated\n' \
              '/userinfoliturgy - Send info about users daily liturgy'
 
 
