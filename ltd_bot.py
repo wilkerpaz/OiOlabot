@@ -667,7 +667,8 @@ admin_text = 'Commands:\n\n' \
              '/senddailyliturgy - Send daily liturgy for all users active\n' \
              '/activated - Send info about the number of users activated\n' \
              '/deactivated - Send info about the number of users deactivated\n' \
-             '/userinfoliturgy - Send info about users daily liturgy'
+             '/userinfoliturgy - Send info about users daily liturgy\n' \
+             '/userliturgydeactivated - Send keys for users daily liturgy deactivated'
 
 
 @bot.on_message(filters.regex(r'^/(deactivatedurl)(\s|$|@\w+)'))
@@ -916,6 +917,21 @@ def get_user_info(_, update):
 
             if text:
                 update.reply_text(text=text, quote=False, parse_mode='html')
+
+
+@bot.on_message(filters.regex(r'^/(userliturgydeactivated)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
+def get_key_liturgy_deactivated(_, update):
+    """
+    Send keys for users daily liturgy deactivated
+    """
+    chat_id = update.chat.id
+    if str(chat_id) not in db.list_admins():
+        return
+
+    keys = db.get_name_chat_id_deactivated()
+    for key in keys:
+        text = f'<code>/removekey {key}</code>'
+        update.reply_text(text=text, quote=False, parse_mode='html')
 
 
 def errors(chat_id):
