@@ -2,7 +2,7 @@ APScheduler==3.6.3
 Babel==2.9.0
 BeautifulSoup4==4.9.3
 feedparser==6.0.2
-lxml==4.6.2
+lxml==4.6.3
 Pyrogram==1.1.7
 pyTelegramBotAPI==3.7.4
 python-dateutil==2.8.1
