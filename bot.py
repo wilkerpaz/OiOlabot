@@ -665,9 +665,24 @@ def backup(_, update):
         bot.send_document(chat_id=chat_id, document=PATH_REDIS)
 
 
-# @bot.on_message()
-# def all_update(_, update):
-#     print(update)
+'''FUNÇÕES CONTRLE ADM BANCO DE DADOS'''
+admin_text = 'Commands:\n\n' \
+             '/deactivatedurl - list of all keys for users disable\n' \
+             '/activateallurl - Activate all url for users\n' \
+             '/allurl - List info about all url\n' \
+             '/getkey - Search all keys for args\n' \
+             '/removekey - Remove key in data base'
+
+
+@bot.on_message(filters.regex(r'^/(admin)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
+def admin(_, update):
+    """
+    Send admin commands
+    """
+    chat_id = update.chat.id
+    if str(chat_id) not in db.list_admins():
+        return
+    update.reply_text(text=admin_text, quote=False, parse_mode='html')
 
 
 # Start Bot
