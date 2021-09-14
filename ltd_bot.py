@@ -252,7 +252,7 @@ def check_button(client, update):
         elif command == '/santododia':
             readings = SantodoDia().buscar_santo()
         else:
-            text = "Please select a date:"
+            text = "Por favor selecione uma data:"
             calendar_keyboard = calendar.create_calendar()
             client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=calendar_keyboard)
 
