@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 
-class SantodoDia():
+
+class SantodoDia:
     def buscar_santo(self):
         html_pagina = requests.get("https://santo.cancaonova.com/")
         html_pagina_soup = BeautifulSoup(html_pagina.text, "lxml")
@@ -14,6 +15,8 @@ class SantodoDia():
         [santo_do_dia_lista.append(texto.text) for texto in santo_do_dia_html]
 
         santo_do_dia_texto = "\n".join(santo_do_dia_lista)
-        print("Santo dia: %s\n" % santo_do_dia_nome)
-        print(santo_do_dia_imagem)
-        print("\n%s" % santo_do_dia_texto)
+
+        return f'Santo dia: {santo_do_dia_nome} \n\n {santo_do_dia_texto}',
+        # print("Santo dia: %s\n" % santo_do_dia_nome)
+        # print(santo_do_dia_imagem)
+        # print("\n%s" % santo_do_dia_texto)

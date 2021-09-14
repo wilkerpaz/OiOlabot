@@ -7,8 +7,11 @@ Base methods for calendar keyboard creation and processing.
 
 import calendar
 import datetime
+import locale
 
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
 
 def create_callback_data(action, year, month, day):
@@ -36,7 +39,7 @@ def create_calendar(year=None, month=None):
     data_ignore = create_callback_data("IGNORE", year, month, 0)
     keyboard = []
     # First row - Month and Year
-    row = [InlineKeyboardButton(calendar.month_name[month] + " " + str(year), callback_data=data_ignore)]
+    row = [InlineKeyboardButton(calendar.month_name[month].title() + " " + str(year), callback_data=data_ignore)]
     keyboard.append(row)
     # Second row - Week Days
     row = []
@@ -77,7 +80,7 @@ def process_calendar_selection(client, update):
     if action == "IGNORE":
         client.answer_callback_query(callback_query_id=update.id)
     elif action == "DAY":
-        update.edit_message_text(text=update.message.text,)
+        update.edit_message_text(text=update.message.text, )
         ret_data = True, datetime.datetime(int(year), int(month), int(day))
     elif action == "PREV-MONTH":
         pre = curr - datetime.timedelta(days=1)
@@ -91,3 +94,17 @@ def process_calendar_selection(client, update):
         client.answer_callback_query(callback_query_id=update.id, text="Something went wrong!")
         # UNKNOWN
     return ret_data
+
+
+EPOCH = 1970
+_EPOCH_ORD = datetime.date(EPOCH, 1, 1).toordinal()
+
+
+def timegm(tuple):
+    """Unrelated but handy function to calculate Unix timestamp from GMT."""
+    year, month, day, hour, minute, second = tuple[:6]
+    days = datetime.date(year, month, 1).toordinal() - _EPOCH_ORD + day - 1
+    hours = days * 24 + hour
+    minutes = hours * 60 + minute
+    seconds = minutes * 60 + second
+    return seconds

@@ -11,6 +11,7 @@ from pyrogram.errors import RPCError
 from pyrogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 import util.homiliadodia
+from util.santododia import SantodoDia
 from util import calendar
 from util.database_daily_liturgy import DatabaseHandler
 from util.datehandler import DateHandler
@@ -38,7 +39,10 @@ buttons = [
     ],
     [
         KeyboardButton(text='/dominical'),
+        KeyboardButton(text='/santododia'),
         KeyboardButton(text='/calendario'),
+    ],
+    [
         KeyboardButton(text='/help'),
     ],
 ]
@@ -172,6 +176,7 @@ async def start(client, update):
            '/hoje - liturgia do dia\n' \
            '/amanha - liturgia do dia seguinte\n' \
            '/dominical - liturgia dominical\n' \
+           '/santododia - santo do dia\n' \
            '/calendario - escolher um dia específico\n' \
            '/help - exibe esta mensagem.'
 
@@ -210,7 +215,7 @@ def stop(_, update):
     logger.info(f'left chat {chat_id} ({escape(chat_title)})')
 
 
-@bot.on_message(filters.regex(r'^/(ontem|hoje|amanha|dominical|calendario)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
+@bot.on_message(filters.regex(r'^/(ontem|hoje|amanha|dominical|calendario|santododia)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def check_button(client, update):
     # audio = None
     chat_id = update.chat.id
@@ -244,6 +249,8 @@ def check_button(client, update):
             weekday = 6 - datetime.now().weekday()
             date = datetime.now() + timedelta(days=weekday)
             readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
+        elif command == '/santododia':
+            readings = SantodoDia().buscar_santo()
         else:
             text = "Please select a date:"
             calendar_keyboard = calendar.create_calendar()
