@@ -16,7 +16,7 @@ class SantodoDia:
 
         santo_do_dia_texto = "\n".join(santo_do_dia_lista)
 
-        return f'Santo dia: {santo_do_dia_nome} \n\n {santo_do_dia_texto}',
+        return f'Santo dia: {santo_do_dia_nome} \n\n {santo_do_dia_texto} \n {santo_do_dia_nome} Rogai por nós',
         # print("Santo dia: %s\n" % santo_do_dia_nome)
         # print(santo_do_dia_imagem)
         # print("\n%s" % santo_do_dia_texto)
