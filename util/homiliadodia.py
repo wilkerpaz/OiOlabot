@@ -28,8 +28,7 @@ class HomiliadoDia:
         self.html_pagina = requests.get("https://homilia.cancaonova.com/pb/")
         self.html_pagina_soup = BeautifulSoup(self.html_pagina.text, "lxml")
         self.url_audio_embed = \
-            self.html_pagina_soup.find("iframe",
-                                       {"src": True, "style": "overflow:hidden;", "class": "iframe_embed"})["src"]
+            self.html_pagina_soup.find_all("iframe", {"src": True, "class": "iframe_embed"})[1]["src"] # player id = 38660432
 
     def obter_homilia(self):
         self.homilia_do_dia_titulo = self.html_pagina_soup.find("h1", {"class": "entry-title"}).findChild(
@@ -60,9 +59,10 @@ class HomiliadoDia:
         response_embed_soup = BeautifulSoup(response_embed.text, "lxml").find_all("script", {"type": "text/javascript"})
 
         for script in response_embed_soup:
-            if 'window.kalturaIframePackageData' in str(script):
-                audio_play_info = str(script)
-                break
+            if script.string is not None:
+                if 'window.kalturaIframePackageData' in script.string:
+                    audio_play_info = script.string
+                    break
 
         # Obter dict a partir do javascript encontrado
         if audio_play_info:
@@ -72,7 +72,7 @@ class HomiliadoDia:
             # Variáveis a serem usadas no request do m3u8
             uiconf_id = audio_play_info_json["playerConfig"]["uiConfId"]
             uid = str(uuid.uuid4())
-            timestamp = str(round(time.time() * 1000))
+            timestamp = str(int(time.time() * 1000))
 
             select_asset = None
             for asset in audio_play_info_json["entryResult"]["contextData"]["flavorAssets"]:
@@ -82,7 +82,7 @@ class HomiliadoDia:
             if select_asset:
                 entry_id = select_asset["entryId"]
                 flavor_id = select_asset["id"]
-                refer_b64 = base64.b64encode("https://cdnapisec.kaltura.com".encode()).decode()
+                refer_b64 = base64.b64encode("https://apps.cancaonova.com".encode()).decode()
 
                 # Request do m3u8 para download do áudio
                 r_m3u8_params = {
@@ -91,7 +91,7 @@ class HomiliadoDia:
                     "clientTag": "html5:v2.53.2",
                     "uiConfId": uiconf_id,
                     "responseFormat": "jsonp",
-                    "callback": "jQuery111109749039138003053_%s" % timestamp,
+                    "callback": "jQuery111107614454285671223_%s" % timestamp,
                     "_": timestamp,
                 }
 
