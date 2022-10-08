@@ -1,11 +1,15 @@
 import glob
 import os
+import logging
 
 import requests
 import wget
 from babel.dates import format_date
 from datetime import datetime
 from bs4 import BeautifulSoup
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)
 
 
 class HomiliadoDia:
@@ -33,6 +37,7 @@ class HomiliadoDia:
         return [f'{self.date}\n{self.homilia_do_dia_titulo}.\n\nReflexão do dia.\n{self.homilia_do_dia_texto}']
 
     def obter_arquivo_audio(self):
+        logger.error(self.audio_mp3)
         if os.path.isfile(self.audio_mp3):
             return {'date': self.date, 'path_audio': self.audio_mp3}
 
@@ -45,6 +50,7 @@ class HomiliadoDia:
 
         # URL
         wget.download(source["src"], self.audio_mp3)
+        logger.error(os.path.isfile(self.audio_mp3))
         if os.path.isfile(self.audio_mp3):
             return {'date': self.date, 'path_audio': self.audio_mp3}
 
