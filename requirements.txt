@@ -12,3 +12,4 @@ redis==3.5.3
 requests==2.26.0
 streamlink==2.0.0
 TgCrypto==1.2.2
+wget==3.2
