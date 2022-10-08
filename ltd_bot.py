@@ -840,6 +840,7 @@ async def daily_liturgy():
             await send_daily_liturgy(chat_id, homily)
 
     audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
+    logger.error(audio.path_audio)
     if audio:
         send = await send_daily_liturgy_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
         path_audio = send.audio.file_id
