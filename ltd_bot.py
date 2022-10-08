@@ -1,4 +1,5 @@
 import logging
+import os
 
 from datetime import datetime, timedelta
 from html import escape
@@ -193,14 +194,21 @@ async def start(client, update):
         await send_daily_liturgy(chat_id, readings)
     await client.send_chat_action(chat_id, "typing")
 
+    homily = util.homiliadodia.HomiliadoDia().obter_homilia()
+    if homily:
+        await send_daily_liturgy(chat_id, homily)
+
     audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
-    if audio_telegram:
-        homily = util.homiliadodia.HomiliadoDia().obter_homilia()
-        if homily:
-            await send_daily_liturgy(chat_id, homily)
+    if os.path.isfile("/tpm/" + date_full + ".mp3"):
         await client.send_chat_action(chat_id, "upload_audio")
-        if audio_telegram:
-            await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
+        await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
+    else:
+        audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
+        if audio:
+            send = await send_daily_liturgy_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
+            path_audio = send.audio.file_id
+            db.del_names(['audio_liturgy'])
+            db.set_name_key('audio_liturgy', {date_full: path_audio})
 
 
 @bot.on_message(filters.regex(r'^/(stop)($|@\w+)'))
@@ -215,7 +223,8 @@ def stop(_, update):
     logger.info(f'left chat {chat_id} ({escape(chat_title)})')
 
 
-@bot.on_message(filters.regex(r'^/(ontem|hoje|amanha|dominical|calendario|santododia)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
+@bot.on_message(
+    filters.regex(r'^/(ontem|hoje|amanha|dominical|calendario|santododia)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def check_button(client, update):
     # audio = None
     chat_id = update.chat.id

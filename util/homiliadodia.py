@@ -25,6 +25,7 @@ class HomiliadoDia:
         self.audio_id = self.homilia_iframe[-1]["src"].split("id=")[1].split("&")[0]
 
     def obter_homilia(self):
+        print(os.path.isfile(self.audio_mp3))
         self.homilia_do_dia_titulo = self.html_pagina_soup.find("h1", {"class": "entry-title"}).findChild(
             "span").text  # Texto título usado na página
         homilia_do_dia_soup = self.html_pagina_soup.find("div", {"class": "entry-content content-homilia"})
