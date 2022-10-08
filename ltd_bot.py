@@ -199,8 +199,8 @@ async def start(client, update):
         await send_daily_liturgy(chat_id, homily)
 
     audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
-    logger.critical(os.path.isfile('/tpm/' + date_full + ".mp3"))
-    if os.path.isfile("/tpm/" + date_full + ".mp3"):
+    logger.critical(os.path.isfile('/tmp/' + date_full + ".mp3"))
+    if os.path.isfile("/tmp/" + date_full + ".mp3"):
         await client.send_chat_action(chat_id, "upload_audio")
         await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
     else:
