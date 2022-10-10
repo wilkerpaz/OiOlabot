@@ -852,12 +852,28 @@ async def daily_liturgy():
     audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
     logger.error(audio.path_audio)
     if audio:
-        send = await send_daily_liturgy_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
+        send = bot.send_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
         path_audio = send.audio.file_id
         db.del_names(['audio_liturgy'])
         db.set_name_key('audio_liturgy', {date_full: path_audio})
         for chat_id in chat_id_activated:
             await send_daily_liturgy_audio(chat_id, path_audio, audio['date'])
+
+
+@bot.on_message(filters.regex(r'^/audio(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
+async def send_audio():
+    date = DateHandler.get_datetime_now()
+    date_full = format_date(date.date(), format='full', locale='pt_br')
+    audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
+    logger.error(audio.path_audio)
+    logger.error(audio.date)
+    if audio:
+        send = await bot.send_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
+        path_audio = send.audio.file_id
+        db.del_names(['audio_liturgy'])
+        db.set_name_key('audio_liturgy', {date_full: path_audio})
+        logger.error(path_audio)
+        return True
 
 
 async def send_daily_liturgy(chat_id, readings):

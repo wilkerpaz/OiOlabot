@@ -34,7 +34,6 @@ class HomiliadoDia:
         return [f'{self.date}\n{self.homilia_do_dia_titulo}.\n\nReflexão do dia.\n{self.homilia_do_dia_texto}']
 
     def obter_arquivo_audio(self):
-        print(self.audio_mp3)
         if os.path.isfile(self.audio_mp3):
             return {'date': self.date, 'path_audio': self.audio_mp3}
 
@@ -47,7 +46,6 @@ class HomiliadoDia:
 
         # URL
         wget.download(source["src"], self.audio_mp3)
-        print(os.path.isfile(self.audio_mp3))
         if os.path.isfile(self.audio_mp3):
             return {'date': self.date, 'path_audio': self.audio_mp3}
 
