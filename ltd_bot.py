@@ -1,5 +1,4 @@
 import logging
-import os
 
 from datetime import datetime, timedelta
 from html import escape
@@ -199,17 +198,15 @@ async def start(client, update):
         await send_daily_liturgy(chat_id, homily)
 
     audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
-    logger.critical(os.path.isfile('/tmp/' + date_full + ".mp3"))
-    if os.path.isfile("/tmp/" + date_full + ".mp3"):
+    if audio_telegram:
         await client.send_chat_action(chat_id, "upload_audio")
         await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
     else:
-        audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
-        if audio:
-            send = await send_daily_liturgy_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
-            path_audio = send.audio.file_id
-            db.del_names(['audio_liturgy'])
-            db.set_name_key('audio_liturgy', {date_full: path_audio})
+        if send_audio():
+            audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
+            if audio_telegram:
+                await client.send_chat_action(chat_id, "upload_audio")
+                await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
 
 
 @bot.on_message(filters.regex(r'^/(stop)($|@\w+)'))
@@ -227,7 +224,8 @@ def stop(_, update):
 @bot.on_message(
     filters.regex(r'^/(ontem|hoje|amanha|dominical|calendario|santododia)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
 def check_button(client, update):
-    # audio = None
+    date = DateHandler.get_datetime_now()
+    date_full = format_date(date.date(), format='full', locale='pt_br')
     chat_id = update.chat.id
     chat_name = '@' + update.chat.username if update.chat.username else '@' + update.from_user.username \
         if update.from_user.username else update.from_user.first_name
@@ -238,6 +236,7 @@ def check_button(client, update):
             return
 
     db.set_user_daily_liturgy(chat_id=chat_id, chat_name=chat_name, user_id=user_id)
+    audio_telegram = False
 
     try:
         client.send_chat_action(chat_id, "typing")
@@ -251,7 +250,8 @@ def check_button(client, update):
         elif command == '/hoje':
             date = datetime.now()
             readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
-            # audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
+            audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
+
         elif command == '/amanha':
             date = datetime.now() + timedelta(days=1)
             readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
@@ -272,11 +272,16 @@ def check_button(client, update):
             for message in readings:
                 text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
                 client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
-        # if audio:
-        #     path_audio = '/tmp/homilia_do_dia.aac'
-        #     date_caption = datetime.now().strftime("%d_%m_%Y") + '\n\nt.me/' + (chat_username or BOT_NAME)
-        #     caption = "homilia_do_dia_%s" % date_caption
-        #     bot.send_audio(chat_id, audio=path_audio, caption=caption)
+
+        if audio_telegram:
+            await client.send_chat_action(chat_id, "upload_audio")
+            await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
+        else:
+            if send_audio():
+                audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
+                if audio_telegram:
+                    await client.send_chat_action(chat_id, "upload_audio")
+                    await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
     except RPCError:
         pass
 
@@ -849,32 +854,30 @@ async def daily_liturgy():
         for chat_id in chat_id_activated:
             await send_daily_liturgy(chat_id, homily)
 
-    audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
-    if audio:
-        send = bot.send_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
-        path_audio = send.audio.file_id
-        db.del_names(['audio_liturgy'])
-        db.set_name_key('audio_liturgy', {date_full: path_audio})
+    audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
+    if audio_telegram:
         for chat_id in chat_id_activated:
-            await send_daily_liturgy_audio(chat_id, path_audio, audio['date'])
+            await bot.send_chat_action(chat_id, "upload_audio")
+            await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
+    else:
+        if send_audio():
+            audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
+            if audio_telegram:
+                for chat_id in chat_id_activated:
+                    await bot.send_chat_action(chat_id, "upload_audio")
+                    await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
 
 
-@bot.on_message(filters.regex(r'^/audio(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
-async def send_audio(client, update):
-    chat_id = update.chat.id
+async def send_audio():
     date = DateHandler.get_datetime_now()
     date_full = format_date(date.date(), format='full', locale='pt_br')
     audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
-    await client.send_chat_action(chat_id, "upload_audio")
     if audio:
         send = await send_daily_liturgy_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
         path_audio = send.audio.file_id
         db.del_names(['audio_liturgy'])
         db.set_name_key('audio_liturgy', {date_full: path_audio})
-        logger.error(path_audio)
         return True
-    else:
-        client.send_message(chat_id, 'Falhou')
 
 
 async def send_daily_liturgy(chat_id, readings):
