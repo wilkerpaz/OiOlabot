@@ -223,7 +223,7 @@ def stop(_, update):
 
 @bot.on_message(
     filters.regex(r'^/(ontem|hoje|amanha|dominical|calendario|santododia)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
-def check_button(client, update):
+async def check_button(client, update):
     date = DateHandler.get_datetime_now()
     date_full = format_date(date.date(), format='full', locale='pt_br')
     chat_id = update.chat.id
@@ -239,7 +239,7 @@ def check_button(client, update):
     audio_telegram = False
 
     try:
-        client.send_chat_action(chat_id, "typing")
+        await client.send_chat_action(chat_id, "typing")
         command = update.text
         # update.delete()
         readings = None
@@ -264,17 +264,17 @@ def check_button(client, update):
         else:
             text = "Por favor selecione uma data:"
             calendar_keyboard = calendar.create_calendar()
-            client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=calendar_keyboard)
+            await client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=calendar_keyboard)
 
         chat = update.chat
         chat_username = chat.username if (chat.username and chat.type != 'private') else None
         if readings:
             for message in readings:
                 text = message + '\n\nt.me/' + (chat_username or BOT_NAME)
-                client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
+                await client.send_message(chat_id, text, disable_web_page_preview=True, reply_markup=keyboard)
 
         if audio_telegram:
-            client.send_chat_action(chat_id, "upload_audio")
+            await client.send_chat_action(chat_id, "upload_audio")
             await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
         #
         # else:
