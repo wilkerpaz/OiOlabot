@@ -868,7 +868,7 @@ async def send_audio():
     logger.error(audio.path_audio)
     logger.error(audio.date)
     if audio:
-        send = await bot.send_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
+        send = await send_daily_liturgy_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
         path_audio = send.audio.file_id
         db.del_names(['audio_liturgy'])
         db.set_name_key('audio_liturgy', {date_full: path_audio})
