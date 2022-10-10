@@ -860,7 +860,7 @@ async def daily_liturgy():
 
 
 @bot.on_message(filters.regex(r'^/audio(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
-async def send_audio():
+async def send_audio(client, _update):
     date = DateHandler.get_datetime_now()
     date_full = format_date(date.date(), format='full', locale='pt_br')
     audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
