@@ -275,7 +275,7 @@ def check_button(client, update):
 
         if audio_telegram:
             client.send_chat_action(chat_id, "upload_audio")
-            send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
+            await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
         #
         # else:
         #     if send_audio():
