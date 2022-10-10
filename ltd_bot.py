@@ -865,8 +865,6 @@ async def send_audio(client, update):
     date = DateHandler.get_datetime_now()
     date_full = format_date(date.date(), format='full', locale='pt_br')
     audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
-    logger.error(audio.path_audio)
-    logger.error(audio.date)
     await client.send_chat_action(chat_id, "upload_audio")
     if audio:
         send = await send_daily_liturgy_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
@@ -875,6 +873,8 @@ async def send_audio(client, update):
         db.set_name_key('audio_liturgy', {date_full: path_audio})
         logger.error(path_audio)
         return True
+    else:
+        client.send_message(chat_id, 'Falhou')
 
 
 async def send_daily_liturgy(chat_id, readings):
