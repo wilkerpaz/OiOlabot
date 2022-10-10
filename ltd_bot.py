@@ -860,12 +860,14 @@ async def daily_liturgy():
 
 
 @bot.on_message(filters.regex(r'^/audio(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
-async def send_audio(client, _update):
+async def send_audio(client, update):
+    chat_id = update.chat.id
     date = DateHandler.get_datetime_now()
     date_full = format_date(date.date(), format='full', locale='pt_br')
     audio = util.homiliadodia.HomiliadoDia().obter_arquivo_audio()
     logger.error(audio.path_audio)
     logger.error(audio.date)
+    await client.send_chat_action(chat_id, "upload_audio")
     if audio:
         send = await send_daily_liturgy_audio(config('CHANNEL_LD'), audio['path_audio'], audio['date'])
         path_audio = send.audio.file_id
