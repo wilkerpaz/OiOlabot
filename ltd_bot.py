@@ -1,4 +1,5 @@
 import logging
+import os
 
 from datetime import datetime, timedelta
 from html import escape
@@ -856,7 +857,7 @@ async def daily_liturgy():
             await send_daily_liturgy(chat_id, homily)
 
     audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
-    if audio_telegram:
+    if audio_telegram and os.path.isfile("/tmp/%s.mp3" % date_full):
         for chat_id in chat_id_activated:
             await bot.send_chat_action(chat_id, "upload_audio")
             await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
