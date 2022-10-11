@@ -831,7 +831,7 @@ def error(_):
     logger.error(f"def error {_}")
 
 
-@bot.on_message(filters.regex(r'^/(senddailylitugy)(\s|$|@\w+)'))
+@bot.on_message(filters.regex(r'^/(senddailyliturgy)(\s|$|@\w+)'))
 async def send_daily_liturgy_all_users(_client, update):
     """
     Send daily liturgy for all users active
