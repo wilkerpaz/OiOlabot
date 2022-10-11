@@ -203,7 +203,7 @@ async def start(client, update):
         await client.send_chat_action(chat_id, "upload_audio")
         await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
     else:
-        if send_audio():
+        if await send_audio():
             audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
             if audio_telegram:
                 await client.send_chat_action(chat_id, "upload_audio")
@@ -279,7 +279,7 @@ async def check_button(client, update):
             await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
         #
         # else:
-        #     if send_audio():
+        #     if await send_audio():
         #         audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
         #         if audio_telegram:
         #             client.send_chat_action(chat_id, "upload_audio")
@@ -862,7 +862,7 @@ async def daily_liturgy():
             await bot.send_chat_action(chat_id, "upload_audio")
             await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
     else:
-        if send_audio():
+        if await send_audio():
             audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
             if audio_telegram:
                 for chat_id in chat_id_activated:
