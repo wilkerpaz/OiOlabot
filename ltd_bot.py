@@ -198,16 +198,7 @@ async def start(client, update):
     if homily:
         await send_daily_liturgy(chat_id, homily)
 
-    audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
-    if audio_telegram:
-        await client.send_chat_action(chat_id, "upload_audio")
-        await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
-    else:
-        if await send_audio():
-            audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
-            if audio_telegram:
-                await client.send_chat_action(chat_id, "upload_audio")
-                await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
+    await audio_daily_liturgy(chat_id, date_full)
 
 
 @bot.on_message(filters.regex(r'^/(stop)($|@\w+)'))
@@ -277,13 +268,7 @@ async def check_button(client, update):
         if audio_telegram:
             await client.send_chat_action(chat_id, "upload_audio")
             await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
-        #
-        # else:
-        #     if await send_audio():
-        #         audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
-        #         if audio_telegram:
-        #             client.send_chat_action(chat_id, "upload_audio")
-        #             send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
+
     except RPCError:
         pass
 
@@ -689,6 +674,7 @@ admin_text = 'Commands:\n\n' \
              '/getkey - Search all keys for args\n' \
              '/removekey - Remove key in data base\n' \
              '/senddailyliturgy - Send daily liturgy for all users active\n' \
+             '/sendaudioliturgy - Send audio daily liturgy for all users active\n' \
              '/activated - Send info about the number of users activated\n' \
              '/deactivated - Send info about the number of users deactivated\n' \
              '/userinfoliturgy - Send info about users daily liturgy\n' \
@@ -842,6 +828,21 @@ async def send_daily_liturgy_all_users(_client, update):
     await daily_liturgy()
 
 
+@bot.on_message(filters.regex(r'^/(sendaudioliturgy)(\s|$|@\w+)'))
+async def send_audio_daily_liturgy_all_users(_client, update):
+    """
+    Send daily liturgy for all users active
+    """
+    chat_id = update.chat.id
+    if str(chat_id) not in db.list_admins():
+        return
+    date = DateHandler.get_datetime_now()
+    date_full = format_date(date.date(), format='full', locale='pt_br')
+    chat_id_activated = db.get_chat_id_activated()
+    for chat_id in chat_id_activated:
+        await audio_daily_liturgy(chat_id, date_full)
+
+
 async def daily_liturgy():
     date = DateHandler.get_datetime_now()
     date_full = format_date(date.date(), format='full', locale='pt_br')
@@ -856,18 +857,22 @@ async def daily_liturgy():
         for chat_id in chat_id_activated:
             await send_daily_liturgy(chat_id, homily)
 
+    for chat_id in chat_id_activated:
+        await audio_daily_liturgy(chat_id, date_full)
+
+
+async def audio_daily_liturgy(chat_id, date_full):
+
     audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
     if audio_telegram and os.path.isfile("/tmp/%s.mp3" % date_full):
-        for chat_id in chat_id_activated:
-            await bot.send_chat_action(chat_id, "upload_audio")
-            await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
+        await bot.send_chat_action(chat_id, "upload_audio")
+        await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
     else:
         if await send_audio():
             audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
             if audio_telegram:
-                for chat_id in chat_id_activated:
-                    await bot.send_chat_action(chat_id, "upload_audio")
-                    await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
+                await bot.send_chat_action(chat_id, "upload_audio")
+                await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
 
 
 async def send_audio():
