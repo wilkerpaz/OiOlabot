@@ -56,7 +56,7 @@ class HomiliadoDia:
             logger.critical('Audio baixado')
             if os.path.isfile(self.audio_mp3):
                 return {'date': self.date, 'path_audio': self.audio_mp3}
-        else
+        else:
             logger.critical("Sem audio disponível.")
 
 # homilia_do_dia = HomiliadoDia()
