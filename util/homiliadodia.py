@@ -49,12 +49,15 @@ class HomiliadoDia:
         source = BeautifulSoup(embed.text, "lxml").find("source")
 
         # URL
-        logger.critical(source["src"])
-        logger.critical('Baixando audio')
-        wget.download(source["src"], self.audio_mp3)
-        logger.critical('Audio baixado')
-        if os.path.isfile(self.audio_mp3):
-            return {'date': self.date, 'path_audio': self.audio_mp3}
+        if source:
+            logger.critical(source["src"])
+            logger.critical('Baixando audio')
+            wget.download(source["src"], self.audio_mp3)
+            logger.critical('Audio baixado')
+            if os.path.isfile(self.audio_mp3):
+                return {'date': self.date, 'path_audio': self.audio_mp3}
+        else
+            logger.critical("Sem audio disponível.")
 
 # homilia_do_dia = HomiliadoDia()
 # homilia_do_dia.obter_homilia()
