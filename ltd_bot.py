@@ -865,13 +865,13 @@ async def audio_daily_liturgy(chat_id, date_full):
 
     audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
     if audio_telegram and os.path.isfile("/tmp/%s.mp3" % date_full):
-        await bot.send_chat_action(chat_id, "upload_audio")
+        # await bot.send_chat_action(chat_id, "upload_audio")
         await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
     else:
         if await send_audio():
             audio_telegram = db.get_value_name_key('audio_liturgy', date_full)
             if audio_telegram:
-                await bot.send_chat_action(chat_id, "upload_audio")
+                # await bot.send_chat_action(chat_id, "upload_audio")
                 await send_daily_liturgy_audio(chat_id, audio_telegram, date_full)
 
 
