@@ -29,7 +29,10 @@ DB = config('DB_LD')
 BOT_NAME = config('BOT_NAME_LD')
 API_TOKEN = config('DEV_TOKEN_LD')  # Tokens do Bot de Desenvolvimento
 
-bot = Client(session_name=BOT_NAME, bot_token=API_TOKEN)
+api_id = config('API_ID')
+api_hash = config('API_HASH')
+
+bot = Client(name=BOT_NAME, api_id=api_id, api_hash=api_hash, bot_token=API_TOKEN)
 db = DatabaseHandler(DB)
 
 buttons = [

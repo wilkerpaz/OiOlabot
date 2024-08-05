@@ -15,6 +15,9 @@ BOT_NAME = config('BOT_NAME')
 BOT_NAME_LD = config('BOT_NAME_LD')
 API_TOKEN = config('DEV_TOKEN')  # Tokens do Bot de Desenvolvimento
 
+api_id = config('API_ID')
+api_hash = config('API_HASH')
+
 logging.basicConfig(level=LOG, format='%(name)s - %(levelname)s - %(message)s')
 
 logger = logging.getLogger(__name__)
@@ -43,7 +46,7 @@ help_text = 'Welcomes everyone that enters a group chat that this bot is a ' \
             "/stop - Deactivates the bot. You won't receive any messages from the bot until you activate the bot again \
             using the start comand\n"
 
-bot = Client(session_name=BOT_NAME, bot_token=API_TOKEN)
+bot = Client(name=BOT_NAME, api_id=api_id, api_hash=api_hash, bot_token=API_TOKEN)
 db = DatabaseHandler(DB)
 
 help_text_feed = "RSS Management\n" \
