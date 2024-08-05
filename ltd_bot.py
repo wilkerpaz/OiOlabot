@@ -234,7 +234,7 @@ async def check_button(client, update):
     audio_telegram = False
 
     try:
-        await client.send_chat_action(chat_id, "typing")
+        await client.send_chat_action(chat_id, enums.ChatAction.TYPING)
         command = update.text
         # update.delete()
         readings = None
@@ -282,7 +282,7 @@ def inline_handler(client, update):
     selected, date = calendar.process_calendar_selection(client, update)
     try:
         if selected:
-            client.send_chat_action(chat_id, "typing")
+            client.send_chat_action(chat_id, enums.ChatAction.TYPING)
             update.message.delete()
             readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
             if readings:
