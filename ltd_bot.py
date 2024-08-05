@@ -1008,7 +1008,7 @@ def admin(_, update):
     chat_id = update.chat.id
     if str(chat_id) not in db.list_admins():
         return
-    update.reply_text(text=admin_text, quote=False, parse_mode='html')
+    update.reply_text(text=admin_text, quote=False)
 
 
 # Start Bot
