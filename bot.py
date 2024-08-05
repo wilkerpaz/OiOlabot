@@ -114,7 +114,7 @@ def _welcome(update, member=None):
 
     # Replace placeholders and send message
     text = text.replace('$username', first_name).replace('$title', chat_title)
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.reply_text(text=text, quote=False)
 
 
 # Introduce the context to a chat its been added to
@@ -140,7 +140,7 @@ def _introduce(client, update):
 
     text = f'Hello {escape(first_name)}! I will now greet anyone who joins this chat ({chat_title}) with a' \
            f' nice message {emoji.GRINNING_FACE} \n\ncheck the /help command for more info!'
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.reply_text(text=text, quote=False)
 
 
 def _set_daily_liturgy(_, update):
@@ -153,7 +153,7 @@ def _set_daily_liturgy(_, update):
     text = 'You will receive the daily liturgy every day.\nFor more commands click /help'
 
     db.set_url_to_chat(chat_id=chat_id, chat_name=chat_name, url=url, user_id=user_id)
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.reply_text(text=text, quote=False)
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
 
 
@@ -216,7 +216,7 @@ def goodbye(update):
 
     # Replace placeholders and send message
     text = text.replace('$username', first_name).replace('$title', chat_title)
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.reply_text(text=text, quote=False)
 
 
 @bot.on_message(filters.regex(r'^/welcome(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
@@ -236,13 +236,13 @@ def set_welcome(client, update):
     if not args:
         text = 'You need to send a message, too! For example:\n' \
                '<code>/welcome The objective of this group is to...</code>'
-        update.reply_text(text=text, quote=False, parse_mode='html')
+        update.reply_text(text=text, quote=False)
         return
 
     # Put message into database
     db.set_name_key('group:' + str(chat_id), {'chat_welcome': args})
     text = 'Got it!'
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.reply_text(text=text, quote=False)
 
 
 @bot.on_message(filters.regex(r'^/goodbye(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
@@ -259,13 +259,13 @@ def set_goodbye(client, update):
     if not args:
         text = 'You need to send a message, too! For example:\n' \
                '<code>/goodbye Goodbye, $username!</code>'
-        update.reply_text(text=text, quote=False, parse_mode='html')
+        update.reply_text(text=text, quote=False)
         return
 
     # Put message into database
     db.set_name_key('group:' + str(chat_id), {'chat_goodbye': args})
     text = 'Got it!'
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.reply_text(text=text, quote=False)
 
 
 @bot.on_message(filters.regex(r'^/(disable_welcome)($|@\w+)'))
@@ -326,7 +326,7 @@ def command_control(client, update, command):
             commit = False
         if commit:
             text = 'Got it!'
-            update.reply_text(text=text, quote=False, parse_mode='html')
+            update.reply_text(text=text, quote=False)
 
 
 def get_chat_by_username(client, update, user_name=None):
@@ -339,7 +339,7 @@ def get_chat_by_username(client, update, user_name=None):
 
         if user_name:
             text = f'I cant resolved username {user_name}'
-            update.reply_text(text=text, quote=False, parse_mode='html')
+            update.reply_text(text=text, quote=False)
         logger.error(f"{_}")
         return False
 
@@ -371,7 +371,7 @@ def get_user_info(client, update):
         text = '\n'.join(f'{k}: {v}' for k, v in get_chat.items())
 
         if text and command == 'me':
-            update.reply_text(text=text, quote=False, parse_mode='html')
+            update.reply_text(text=text, quote=False)
 
 
 def feed_url(update, url, **chat_info):
@@ -381,7 +381,7 @@ def feed_url(update, url, **chat_info):
     if not FeedHandler.is_parsable(url=arg_url):
         text = "Sorry! It seems like '" + \
                str(arg_url) + "' doesn't provide an RSS news feed.. Have you tried another URL from that provider?"
-        update.reply_text(text=text, quote=False, parse_mode='html')
+        update.reply_text(text=text, quote=False)
         return
     chat_id = chat_info['chat_id']
     chat_name = chat_info.get('chat_name')
@@ -395,7 +395,7 @@ def feed_url(update, url, **chat_info):
     else:
         text = "Sorry, " + update.from_user.first_name + \
                "! I already have that url with stored in your subscriptions."
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.reply_text(text=text, quote=False)
 
 
 @bot.on_message(filters.regex(r'^/addurl(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
@@ -419,7 +419,7 @@ def add_url(client, update):
            "/addurl @username http://www.feedforall.com/sample.xml "
 
     if len(args) > 2 or not args:
-        update.reply_text(text=text, quote=False, parse_mode='html')
+        update.reply_text(text=text, quote=False)
         return
 
     elif len(args) == 2:
@@ -428,7 +428,7 @@ def add_url(client, update):
         chat_info = get_chat_by_username(client, update, chat_name)
         text = "I don't have access to chat " + chat_name + '\n' + text
         if chat_info is None:
-            update.reply_text(text=text, quote=False, parse_mode='html')
+            update.reply_text(text=text, quote=False)
         else:
             chat_info = {'chat_id': chat_info['id'], 'chat_name': chat_info['username']}
             feed_url(update, url, **chat_info)
@@ -459,13 +459,13 @@ def list_url(client, update):
             return
 
     text = "Here is a list of all subscriptions I stored for you!"
-    client.send_message(chat_id=user_id, text=text, parse_mode='html')
+    client.send_message(chat_id=user_id, text=text)
 
     urls = db.get_chat_urls(user_id=user_id)
     for url in urls:
         url = (str(url['chat_name']) + ' ' if url['chat_name'] and int(url['chat_id']) < 0 else '') + url['url']
         text = '<code>/removeurl ' + url + '</code>'
-        client.send_message(chat_id=user_id, text=text, parse_mode='html')
+        client.send_message(chat_id=user_id, text=text)
 
 
 @bot.on_message(filters.regex(r'^/(removeurl)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
@@ -489,7 +489,7 @@ def remove_url(client, update):
            "/removeurl @username http://www.feedforall.com/sample.xml "
 
     if len(args) > 2 or not args or args == '':
-        update.reply_text(text=text, quote=False, parse_mode='html')
+        update.reply_text(text=text, quote=False)
         return
 
     user_id = update.from_user.id
@@ -499,13 +499,13 @@ def remove_url(client, update):
 
     if chat_id_db is None:
         text = "Don't exist chat " + chat_name + '\n' + text
-        update.reply_text(text=text, quote=False, parse_mode='html')
+        update.reply_text(text=text, quote=False)
     else:
         exist_url = db.exist_url_to_chat(user_id, chat_id_db, url)
         if not exist_url:
             chat_name = chat_name or update.from_user.first_name
             text = "Don't exist " + url + " for chat " + chat_name + '\n' + text
-            update.reply_text(text=text, quote=False, parse_mode='html')
+            update.reply_text(text=text, quote=False)
             result = None
         else:
             result = True if db.del_url_for_chat(chat_id_db, url) else None
@@ -516,7 +516,7 @@ def remove_url(client, update):
             text = "I can not find an entry with label " + \
                    url + " in your subscriptions! Please check your subscriptions using " \
                          "/listurl and use the delete command again!"
-        update.reply_text(text=text, quote=False, parse_mode='html')
+        update.reply_text(text=text, quote=False)
 
     names_url = db.find_names(url)
     if len(names_url) == 1:
@@ -538,7 +538,7 @@ def stop(client, update):
     text = "Oh.. Okay, I will not send you any more news updates! " \
            "If you change your mind and you want to receive messages " \
            "from me again use /start command again!"
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.reply_text(text=text, quote=False)
 
 
 '''FUNÇÕES CONTRLE ADM BANCO DE DADOS'''
@@ -556,12 +556,12 @@ def list_url_deactivated(_, update):
         return
 
     text = "Here is a list of all name deactivated"
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.reply_text(text=text, quote=False)
 
     urls = db.get_urls_deactivated()
     for url in urls:
         text = '<code>/removekey ' + url + '</code>'
-        update.reply_text(text=text, quote=False, parse_mode='html')
+        update.reply_text(text=text, quote=False)
 
 
 @bot.on_message(filters.regex(r'^/(activateallurl)(\s|$|@\w+)'))
@@ -577,7 +577,7 @@ def activate_all_urls(_, update):
 
     db.activated_all_urls()
     text = 'Got it!'
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.reply_text(text=text, quote=False)
 
 
 @bot.on_message(filters.regex(r'^/(allurl)(\s|$|@\w+)'))
@@ -592,7 +592,7 @@ def all_url(_, update):
         return
 
     text = "Here is a list of all subscriptions I stored for you!"
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.reply_text(text=text, quote=False)
 
     urls = db.get_urls_activated()
     for url in urls:
@@ -601,7 +601,7 @@ def all_url(_, update):
                + 'last_url: <code>' + last_update['last_url'] + '</code>\n\n' \
                + 'url: <code>' + url + '</code>'
 
-        update.reply_text(text=text, quote=False, parse_mode='html')
+        update.reply_text(text=text, quote=False)
 
 
 @bot.on_message(filters.regex(r'^/(getkey)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
@@ -616,7 +616,7 @@ def get_key(_, update):
         keys = db.find_names(args[0])
         for k in keys:
             text = str('<code>/removekey ' + str(k) + '</code>')
-            update.reply_text(text=text, quote=False, parse_mode='html')
+            update.reply_text(text=text, quote=False)
 
 
 @bot.on_message(filters.regex(r'^/(removekey)(?:\s|$|@\w+\s+)(?:(?P<text>.+))?'))
@@ -631,7 +631,7 @@ def remove_key(_, update):
         key = args[0]
         if db.redis.delete(args[0]) == 1:
             text = text + key
-            update.reply_text(text=text, quote=False, parse_mode='html')
+            update.reply_text(text=text, quote=False)
 
 
 @bot.on_message(filters.regex(r'^/(owner)(\s|$|@\w+)'))
@@ -650,7 +650,7 @@ def owner(_, update):
 
     logger.info('Invited by %s to chat %d (%s)' % (user_id, chat_id, update.chat.title))
     text = 'Got it!'
-    update.reply_text(text=text, quote=False, parse_mode='html')
+    update.reply_text(text=text, quote=False)
 
 
 def error(_):
@@ -685,7 +685,7 @@ def admin(_, update):
     chat_id = update.chat.id
     if str(chat_id) not in db.list_admins():
         return
-    update.reply_text(text=admin_text, quote=False, parse_mode='html')
+    update.reply_text(text=admin_text, quote=False)
 
 
 # Start Bot
