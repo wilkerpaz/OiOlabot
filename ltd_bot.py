@@ -191,11 +191,11 @@ async def start(client, update):
 
     date = DateHandler.get_datetime_now()
     date_full = format_date(date.date(), format='full', locale='pt_br')
-    await client.send_chat_action(chat_id, "typing")
+    await client.send_chat_action(chat_id, enums.ChatAction.TYPING)
     readings = BuscarLiturgia(dia=date.day, mes=date.month, ano=date.year).obter_url()
     if readings:
         await send_daily_liturgy(chat_id, readings)
-    await client.send_chat_action(chat_id, "typing")
+    await client.send_chat_action(chat_id, enums.ChatAction.TYPING)
 
     homily = util.homiliadodia.HomiliadoDia().obter_homilia()
     if homily:
