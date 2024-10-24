@@ -169,7 +169,7 @@ def start(client, update):
 
     if not bool(db.get_value_name_key('group:' + str(chat_id), 'chat_quiet')) \
             or str(db.get_value_name_key('group:' + str(chat_id), 'chat_adm')) == str(from_user):
-        update.reply_text(text=help_text, quote=False, parse_mode='MARKDOWN', disable_web_page_preview=True)
+        update.reply_text(text=help_text, quote=False, disable_web_page_preview=True)
 
 
 @bot.on_message(filters.new_chat_members)
