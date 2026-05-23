@@ -2,7 +2,8 @@
 *config.ini
 *.session*
 *service.sh
-
+env_oiolabot/
+venvPyrogram/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -94,6 +95,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+venv_v2/
 
 # Spyder project settings
 .spyderproject
@@ -107,3 +109,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+.vscode/
+.claude/
+env_oiolabot/OiOlabot

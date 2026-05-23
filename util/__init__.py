@@ -1,2 +1,2 @@
-from util import calendar, database, database_daily_liturgy, datehandler, feedhandler, homiliadodia, \
-    santododia, liturgiadiaria
+# v2: Only import v2 modules
+from util import calendar, datehandler, feedhandler, database
