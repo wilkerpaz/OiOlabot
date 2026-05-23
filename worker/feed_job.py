@@ -65,6 +65,11 @@ class FeedJob:
                 logger.debug(f"No new entries for {url} (already processed)")
                 return
 
+            # First time: only send the latest entry to avoid spam
+            if not last_entry_id and new_entries:
+                logger.info(f"First sync for {url}: sending only latest entry (to avoid spam)")
+                new_entries = new_entries[:1]
+
             # Get subscribed chats
             chats = await self.db.get_chats_for_url(url)
             if not chats:
