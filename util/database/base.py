@@ -10,11 +10,15 @@ class BaseDatabase:
 
     def __init__(self, db: int):
         """Initialize Redis connection parameters."""
-        password = config("REDIS", default="")
+        # Try REDIS_PASSWORD first (v2 format), fall back to REDIS (v1 format)
+        password = config("REDIS_PASSWORD", default=None)
+        if not password:
+            password = config("REDIS", default=None)
+
         self.redis = Redis(
-            host="localhost",
-            port=6379,
-            password=password or None,
+            host=config("REDIS_HOST", default="localhost"),
+            port=int(config("REDIS_PORT", default=6379)),
+            password=password,
             decode_responses=True,
             db=db,
         )
