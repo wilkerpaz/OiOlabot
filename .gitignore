@@ -2,7 +2,8 @@
 *config.ini
 *.session*
 *service.sh
-
+env_oiolabot/
+venvPyrogram/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
