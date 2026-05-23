@@ -15,11 +15,10 @@ logger = logging.getLogger(__name__)
 class FeedJob:
     """Background job to distribute RSS feeds to subscribers."""
 
-    def __init__(self, db: BaseDatabase, bot_token: str, group_link: str = None):
-        """Initialize with database, bot token, and optional group link."""
+    def __init__(self, db: BaseDatabase, bot_token: str):
+        """Initialize with database and bot token."""
         self.db = db
         self.bot_token = bot_token
-        self.group_link = group_link
         self.api_url = f"https://api.telegram.org/bot{bot_token}"
 
     async def run(self) -> None:
@@ -97,7 +96,7 @@ class FeedJob:
         success_count = 0
         try:
             for entry in entries:
-                text = self._format_entry(entry)
+                text = await self._format_entry(entry, client, chat_id)
                 if not text:
                     continue
 
@@ -134,8 +133,8 @@ class FeedJob:
             logger.error(f"Error sending entries to {chat_id}: {e}")
             return False
 
-    def _format_entry(self, entry: dict) -> str:
-        """Format a feed entry as HTML message."""
+    async def _format_entry(self, entry: dict, client: httpx.AsyncClient, chat_id: int) -> str:
+        """Format a feed entry as HTML message with group/channel link footer."""
         try:
             title = entry.get("title", "").strip()
             link = entry.get("link", "").strip()
@@ -155,16 +154,35 @@ class FeedJob:
                 if summary:
                     text += f"{summary}\n"
             if link:
-                text += f"{link}"
+                text += link
 
-            # Add group/channel link footer if configured
-            if self.group_link:
-                text += f"\n\n{self.group_link}"
+            # Add group/channel link footer (matching v1 behavior)
+            group_link = await self._get_chat_link(client, chat_id)
+            if group_link:
+                text += f"\n\n{group_link}"
 
             return text.strip()
         except Exception as e:
             logger.error(f"Error formatting entry: {e}")
             return ""
+
+    async def _get_chat_link(self, client: httpx.AsyncClient, chat_id: int) -> str:
+        """Get chat username or construct link (matching v1 logic)."""
+        try:
+            # Call Telegram getChat API to get chat info
+            response = await client.get(f"{self.api_url}/getChat?chat_id={chat_id}")
+            if response.status_code == 200:
+                data = response.json().get("result", {})
+                chat_type = data.get("type")
+                username = data.get("username")
+
+                # If it's a group/supergroup/channel with username, return t.me/username
+                if username and chat_type != "private":
+                    return f"t.me/{username}"
+        except Exception as e:
+            logger.debug(f"Could not get chat info for {chat_id}: {e}")
+
+        return ""
 
     def _clean_html(self, text: str) -> str:
         """Remove HTML tags and decode HTML entities."""
