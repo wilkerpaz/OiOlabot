@@ -18,6 +18,9 @@ class LiturgyMixin:
     def _register_liturgy_handlers(self) -> None:
         """Register liturgy-specific handlers."""
         self.client.add_handler(
+            MessageHandler(self._on_help, filters.command("help"))
+        )
+        self.client.add_handler(
             MessageHandler(self.today_liturgy, filters.command("hoje"))
         )
         self.client.add_handler(
@@ -134,3 +137,26 @@ class LiturgyMixin:
         except Exception as e:
             logger.error(f"Error unsubscribing from daily liturgy: {e}")
             await message.reply("Erro ao desativar entrega diária.")
+
+    async def _on_help(self, client, message):
+        """Send help message with available commands."""
+        help_text = (
+            "**Comandos Disponíveis (Liturgia)**\n\n"
+            "/hoje — Leitura de hoje\n"
+            "/ontem — Leitura de ontem\n"
+            "/amanha — Leitura de amanhã\n"
+            "/dominical — Leitura de domingo\n"
+            "/santododia — Santo do dia\n"
+            "/calendario — Escolher data\n"
+            "/start — Receber liturgia diariamente às 7h\n"
+            "/stop — Parar entrega diária\n"
+            "/addurl — Adicionar feed RSS\n"
+            "/listurl — Listar feeds\n"
+            "/removeurl — Remover feed\n"
+            "/welcome — Mensagem de boas-vindas\n"
+            "/goodbye — Mensagem de despedida\n"
+        )
+        try:
+            await message.reply(help_text)
+        except Exception as e:
+            logger.error(f"Error sending help: {e}")
