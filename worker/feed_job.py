@@ -39,43 +39,21 @@ class FeedJob:
             logger.error(f"FeedJob error: {e}", exc_info=True)
 
     async def _process_url(self, client: httpx.AsyncClient, url: str) -> None:
-        """Process a single feed URL."""
+        """Process a single feed URL with date/URL validation (v1 logic)."""
         try:
-            # Get URL metadata (last update, last entry ID, last URL)
+            # Get URL metadata (last update and last URL)
             metadata = await self.db.get_url_metadata(url)
             last_update_str = metadata.get("last_update") if metadata else None
-            last_entry_id = metadata.get("last_entry") if metadata else None
             last_url = metadata.get("last_url") if metadata else None
 
-            # Parse the feed (get up to 4 entries to find new ones)
+            # Parse the feed (get 4 latest entries)
             entries = await FeedHandler.parse_feed(url, entries=4)
             if not entries:
                 logger.debug(f"No entries found for {url}")
                 return
 
-            # Check if first entry URL is different from last_url
-            first_entry_url = entries[0].get("link", "")
-            if last_url and first_entry_url == last_url:
-                logger.debug(f"No new entries for {url} (first URL hasn't changed)")
-                return
-
-            # Filter: only send NEW entries (not processed before)
-            new_entries = []
-            for entry in entries:
-                entry_id = entry.get("id") or entry.get("link")
-                # Stop at the last processed entry
-                if last_entry_id and entry_id == last_entry_id:
-                    break
-                new_entries.append(entry)
-
-            if not new_entries:
-                logger.debug(f"No new entries for {url} (already processed)")
-                return
-
-            # First time: only send the latest entry to avoid spam
-            if not last_entry_id and new_entries:
-                logger.info(f"First sync for {url}: sending only latest entry (to avoid spam)")
-                new_entries = new_entries[:1]
+            # Reverse to process from oldest to newest (ascending date order)
+            entries = list(reversed(entries))
 
             # Get subscribed chats
             chats = await self.db.get_chats_for_url(url)
@@ -83,66 +61,91 @@ class FeedJob:
                 logger.debug(f"No subscribed chats for {url}")
                 return
 
-            # Send NEW entries to each chat
-            success_count = 0
-            for chat in chats:
-                if await self._send_entries_to_chat(client, chat["chat_id"], new_entries):
-                    success_count += 1
+            # Parse last_update for comparison
+            last_update = None
+            if last_update_str:
+                try:
+                    last_update = DateHandler.parse_datetime(last_update_str)
+                except Exception as e:
+                    logger.warning(f"Could not parse last_update {last_update_str}: {e}")
 
-            # Update metadata only if at least one send succeeded
-            if success_count > 0:
-                now = DateHandler.get_datetime_now()
-                latest_entry_id = new_entries[0].get("id") or new_entries[0].get("link")
-                latest_entry_url = new_entries[0].get("link", "")
-                await self.db.update_url_metadata(url, str(now), latest_entry_url)
-                logger.info(f"Processed {url}: sent {len(new_entries)} new entry(ies) to {len(chats)} chat(s)")
-            else:
-                logger.warning(f"Failed to send entries from {url} to any chat")
+            # Process each entry (oldest to newest)
+            for entry in entries:
+                entry_url = entry.get("link", "").strip()
+
+                # Extract and parse entry date
+                entry_date = self._get_entry_datetime(entry)
+                if not entry_date:
+                    logger.debug(f"Skipping entry with missing/invalid date")
+                    continue
+
+                if not entry_url:
+                    logger.debug(f"Skipping entry with missing URL")
+                    continue
+
+                # Validate: skip if date <= last_update
+                if last_update and entry_date <= last_update:
+                    logger.debug(f"Entry date {entry_date} <= last_update {last_update}, skipping")
+                    continue
+
+                # Validate: skip if URL same as last_url
+                if last_url and entry_url == last_url:
+                    logger.debug(f"Entry URL same as last_url, skipping")
+                    continue
+
+                # Send this entry to all chats
+                success_count = 0
+                for chat in chats:
+                    if await self._send_entry_to_chat(client, chat["chat_id"], entry):
+                        success_count += 1
+
+                # Update metadata if at least one send succeeded
+                if success_count > 0:
+                    await self.db.update_url_metadata(url, str(entry_date), entry_url)
+                    logger.info(f"Sent entry {entry_url} to {success_count} chat(s), updated metadata")
+                else:
+                    logger.warning(f"Failed to send entry {entry_url} to any chat")
 
         except Exception as e:
             logger.error(f"Error processing URL {url}: {e}")
 
-    async def _send_entries_to_chat(
-        self, client: httpx.AsyncClient, chat_id: int, entries: list
+    async def _send_entry_to_chat(
+        self, client: httpx.AsyncClient, chat_id: int, entry: dict
     ) -> bool:
-        """Send feed entries to a chat. Return True if at least one succeeded."""
-        success_count = 0
+        """Send a single feed entry to a chat. Return True if succeeded."""
         try:
-            for entry in entries:
-                text = await self._format_entry(entry, client, chat_id)
-                if not text:
-                    continue
+            text = await self._format_entry(entry, client, chat_id)
+            if not text:
+                return False
 
-                payload = {
-                    "chat_id": chat_id,
-                    "text": text,
-                    "disable_web_page_preview": False,
-                }
+            payload = {
+                "chat_id": chat_id,
+                "text": text,
+                "disable_web_page_preview": False,
+            }
 
-                response = await client.post(
-                    f"{self.api_url}/sendMessage",
-                    json=payload,
-                )
+            response = await client.post(
+                f"{self.api_url}/sendMessage",
+                json=payload,
+            )
 
-                strategy, error_details = ErrorHandler.classify_response(response)
+            strategy, error_details = ErrorHandler.classify_response(response)
 
-                if strategy == "success":
-                    success_count += 1
-                elif strategy == "permanent":
-                    ErrorHandler.log_error(chat_id, error_details, strategy)
-                    await self.db.deactivate_url_for_chat(chat_id)
-                    return False  # Stop sending to this chat
-                elif strategy == "transient":
-                    ErrorHandler.log_error(chat_id, error_details, strategy)
-                    # Continue trying other entries
-                else:
-                    ErrorHandler.log_error(chat_id, error_details, strategy)
-                    # Continue
-
-            return success_count > 0
+            if strategy == "success":
+                return True
+            elif strategy == "permanent":
+                ErrorHandler.log_error(chat_id, error_details, strategy)
+                await self.db.deactivate_url_for_chat(chat_id)
+                return False
+            elif strategy == "transient":
+                ErrorHandler.log_error(chat_id, error_details, strategy)
+                return False
+            else:
+                ErrorHandler.log_error(chat_id, error_details, strategy)
+                return False
 
         except Exception as e:
-            logger.error(f"Error sending entries to {chat_id}: {e}")
+            logger.error(f"Error sending entry to {chat_id}: {e}")
             return False
 
     async def _format_entry(self, entry: dict, client: httpx.AsyncClient, chat_id: int) -> str:
@@ -187,6 +190,22 @@ class FeedJob:
             logger.debug(f"Could not get chat info for {chat_id}: {e}")
 
         return ""
+
+    def _get_entry_datetime(self, entry: dict):
+        """Extract and parse entry date to datetime object (v1 logic)."""
+        try:
+            # Try published field first
+            if "published" in entry and entry["published"]:
+                return DateHandler.parse_datetime(entry["published"])
+
+            # Try updated field
+            if "updated" in entry and entry["updated"]:
+                return DateHandler.parse_datetime(entry["updated"])
+
+            return None
+        except Exception as e:
+            logger.debug(f"Error extracting entry date: {e}")
+            return None
 
     def _clean_html(self, text: str) -> str:
         """Remove HTML tags and decode HTML entities."""
