@@ -110,3 +110,4 @@ venv_v2/
 .mypy_cache/
 .vscode/
 .claude/
+nix/home.nix
