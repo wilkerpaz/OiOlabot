@@ -1,9 +1,24 @@
 {
-    "python.defaultInterpreterPath": "${workspaceFolder}/venvPyrogram/bin/python",
+    "python.defaultInterpreterPath": "${workspaceFolder}/venv_v2/bin/python",
     "python.terminal.activateEnvironment": true,
     "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
     "terminal.integrated.env.linux": {
-        "VIRTUAL_ENV": "${workspaceFolder}/venvPyrogram",
-        "PATH": "${workspaceFolder}/venvPyrogram/bin:${env:PATH}"
+        "VIRTUAL_ENV": "${workspaceFolder}/venv_v2",
+        "PATH": "${workspaceFolder}/venv_v2/bin:${env:PATH}"
+    },
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.python",
+        "editor.formatOnSave": true,
+        "editor.rulers": [
+            88,
+            120
+        ]
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/.*": true
     }
 }
