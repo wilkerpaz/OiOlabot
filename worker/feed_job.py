@@ -1,6 +1,8 @@
 import logging
 import httpx
+import re
 from datetime import datetime, timezone
+from html import unescape
 
 from util.database.base import BaseDatabase
 from util.feedhandler import FeedHandler
@@ -125,11 +127,16 @@ class FeedJob:
             if not title:
                 return ""
 
+            # Clean HTML tags from title and summary
+            title = self._clean_html(title)
+            summary = self._clean_html(summary)
+
             text = f"<b>{title}</b>\n"
             if summary:
-                # Truncate summary to 300 chars
-                summary = summary[:300].replace("<", "&lt;").replace(">", "&gt;")
-                text += f"{summary}\n"
+                # Truncate summary to 250 chars and clean
+                summary = summary[:250].strip()
+                if summary:
+                    text += f"{summary}\n"
             if link:
                 text += f'<a href="{link}">Leia mais</a>'
 
@@ -137,3 +144,13 @@ class FeedJob:
         except Exception as e:
             logger.error(f"Error formatting entry: {e}")
             return ""
+
+    def _clean_html(self, text: str) -> str:
+        """Remove HTML tags and decode HTML entities."""
+        # Remove HTML tags
+        text = re.sub(r'<[^>]+>', '', text)
+        # Decode HTML entities
+        text = unescape(text)
+        # Clean multiple spaces
+        text = ' '.join(text.split())
+        return text.strip()
