@@ -42,10 +42,10 @@ class AdminMainMixin:
             MessageHandler(self._on_allurl, filters.command("allurl"))
         )
         self.client.add_handler(
-            MessageHandler(self._on_deactivated, filters.command("deactivated"))
+            MessageHandler(self._on_activated, filters.command("activated"))
         )
         self.client.add_handler(
-            MessageHandler(self._on_activated, filters.command("activated"))
+            MessageHandler(self._on_deactivated, filters.command("deactivated"))
         )
         self.client.add_handler(
             MessageHandler(self._on_userinfo, filters.command("userinfo"))
@@ -85,6 +85,8 @@ class AdminMainMixin:
             "/owner — Define você como proprietário do grupo\n\n"
             "**Gerenciamento de Feeds:**\n"
             "/allurl — Lista todos os feeds com metadata\n"
+            "/activated — Mostra número de feeds ativos\n"
+            "/deactivated — Mostra número de feeds inativos\n"
             "/deactivatedurl — Lista feeds desativados\n"
             "/activateallurl — Ativa todos os feeds\n\n"
             "**Banco de Dados:**\n"
@@ -283,7 +285,11 @@ class AdminMainMixin:
             await message.reply("Erro ao listar feeds.")
 
     async def _on_deactivated(self, client, message):
-        """List deactivated URLs."""
+        """List deactivated URLs (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             urls = await self.db.get_urls_deactivated()
             count = len(urls)
@@ -293,7 +299,11 @@ class AdminMainMixin:
             await message.reply("Erro ao listar inativos.")
 
     async def _on_activated(self, client, message):
-        """List active URLs."""
+        """List active URLs (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             urls = await self.db.get_urls_activated()
             count = len(urls)
