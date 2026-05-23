@@ -229,13 +229,12 @@ class AdminMainMixin:
             logger.info(f"Backup file ready at {redis_path}: {file_size_mb:.2f} MB")
 
             # Send backup file
-            async with open(redis_path, "rb") as backup_file:
-                caption = f"Backup Redis 💾\n📦 Tamanho: {file_size_mb:.2f} MB\n📁 Path: {redis_path}\n⏰ {DateHandler.get_datetime_now().strftime('%Y-%m-%d %H:%M:%S')}"
-                await message.reply_document(
-                    document=backup_file,
-                    caption=caption,
-                    file_name=f"redis_dump_{DateHandler.get_datetime_now().strftime('%Y%m%d_%H%M%S')}.rdb"
-                )
+            caption = f"Backup Redis 💾\n📦 Tamanho: {file_size_mb:.2f} MB\n📁 Path: {redis_path}\n⏰ {DateHandler.get_datetime_now().strftime('%Y-%m-%d %H:%M:%S')}"
+            await message.reply_document(
+                document=redis_path,
+                caption=caption,
+                file_name=f"redis_dump_{DateHandler.get_datetime_now().strftime('%Y%m%d_%H%M%S')}.rdb"
+            )
             logger.info(f"Backup sent successfully: {file_size_mb:.2f} MB")
             await message.reply("✅ Backup concluído e arquivo enviado.")
 
