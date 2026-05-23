@@ -123,24 +123,40 @@ class AdminMainMixin:
             await message.reply("Erro ao ativar feeds.")
 
     async def _on_allurl(self, client, message):
-        """List all active feeds with metadata."""
+        """List all active feeds with metadata (split into multiple messages if needed)."""
         try:
             urls = await self.db.get_urls_activated()
             if not urls:
                 await message.reply("Nenhum feed ativo.")
                 return
 
-            text = "**Feeds Ativos:**\n\n"
+            # Build messages, splitting if text exceeds Telegram's 4096 char limit
+            messages = []
+            current_text = "**Feeds Ativos:**\n\n"
+            max_length = 4000  # Leave room for safety margin
+
             for url in urls:
                 metadata = await self.db.get_url_metadata(url)
                 if metadata:
                     last_update = metadata.get("last_update", "N/A")
                     last_url = metadata.get("last_url", "N/A")
-                    text += f"🔗 {url}\n"
-                    text += f"  Última atualização: {last_update}\n"
-                    text += f"  Último artigo: {last_url}\n\n"
+                    entry_text = f"🔗 {url}\n  Última atualização: {last_update}\n  Último artigo: {last_url}\n\n"
 
-            await message.reply(text)
+                    # If adding this entry would exceed limit, save current message and start new one
+                    if len(current_text) + len(entry_text) > max_length:
+                        messages.append(current_text)
+                        current_text = f"**Feeds Ativos (cont.):**\n\n{entry_text}"
+                    else:
+                        current_text += entry_text
+
+            # Add remaining text
+            if current_text != "**Feeds Ativos:**\n\n":
+                messages.append(current_text)
+
+            # Send all messages
+            for msg in messages:
+                await message.reply(msg)
+
         except Exception as e:
             logger.error(f"Error in _on_allurl: {e}")
             await message.reply("Erro ao listar feeds.")
