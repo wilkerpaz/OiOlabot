@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import datetime
 
+from decouple import config
 from pyrogram import filters
 from pyrogram.handlers import MessageHandler
 from pyrogram.types import Document
@@ -183,30 +184,53 @@ class AdminMainMixin:
             # Trigger Redis backup
             result = await self.db.backup()
             if not result:
-                await message.reply("⚠️ Backup já foi feito hoje. Tentando enviar o arquivo anterior...")
+                logger.info("Backup already done today, attempting to send existing file")
 
             # Get Redis backup path from .env
-            redis_path = os.getenv("PATH_REDIS", "/var/lib/redis/dump.rdb")
-            logger.info(f"Backup path: {redis_path}")
+            redis_path = config("PATH_REDIS", default="/var/lib/redis/dump.rdb")
+            logger.info(f"Attempting backup path from .env: {redis_path}")
+
+            # Try primary path
+            if not os.path.exists(redis_path):
+                logger.warning(f"Path not found: {redis_path}")
+                # Try alternative paths
+                alternative_paths = [
+                    "/var/lib/redis/dump.rdb",
+                    "/data/dump.rdb",
+                    os.path.expanduser("~/.redis/dump.rdb"),
+                ]
+                for alt_path in alternative_paths:
+                    if os.path.exists(alt_path):
+                        redis_path = alt_path
+                        logger.info(f"Found backup at alternative path: {redis_path}")
+                        break
 
             if not os.path.exists(redis_path):
-                logger.error(f"Backup file not found at: {redis_path}")
-                await message.reply(f"❌ Arquivo de backup não encontrado em `{redis_path}`")
+                logger.error(f"Backup file not found at any path. Tried: {redis_path}")
+                await message.reply(
+                    f"❌ Arquivo de backup não encontrado.\n\n"
+                    f"**Configuração esperada:**\n"
+                    f"`PATH_REDIS={redis_path}`\n\n"
+                    f"**Verifique:**\n"
+                    f"1. O arquivo existe em `{redis_path}`?\n"
+                    f"2. A variável `PATH_REDIS` está no `.env`?\n"
+                    f"3. O Redis está rodando?"
+                )
                 return
 
             # Verify file size and readability
             file_size = os.path.getsize(redis_path)
             if file_size == 0:
                 logger.error(f"Backup file is empty: {redis_path}")
-                await message.reply("❌ Arquivo de backup está vazio.")
+                await message.reply("❌ Arquivo de backup está vazio. Redis pode não estar rodando.")
                 return
 
             file_size_mb = file_size / (1024 * 1024)
-            logger.info(f"Backup file ready: {file_size_mb:.2f} MB")
+            logger.info(f"Backup file ready at {redis_path}: {file_size_mb:.2f} MB")
 
             # Send backup file
             async with open(redis_path, "rb") as backup_file:
-                caption = f"Backup Redis 💾\n📦 Tamanho: {file_size_mb:.2f} MB\n⏰ {DateHandler.get_datetime_now().strftime('%Y-%m-%d %H:%M:%S')}"
+                caption = f"Backup Redis 💾\n📦 Tamanho: {file_size_mb:.2f} MB\n📁 Path: {redis_path}\n⏰ {DateHandler.get_datetime_now().strftime('%Y-%m-%d %H:%M:%S')}"
                 await message.reply_document(
                     document=backup_file,
                     caption=caption,
@@ -217,7 +241,7 @@ class AdminMainMixin:
 
         except Exception as e:
             logger.error(f"Error in _on_backup: {e}", exc_info=True)
-            await message.reply(f"❌ Erro ao fazer backup: {type(e).__name__}")
+            await message.reply(f"❌ Erro ao fazer backup: {type(e).__name__}: {str(e)}")
 
     async def _on_deactivatedurl(self, client, message):
         """List deactivated feeds (admin only)."""
