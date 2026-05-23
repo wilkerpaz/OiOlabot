@@ -2,8 +2,6 @@
 *config.ini
 *.session*
 *service.sh
-env_oiolabot/
-venvPyrogram/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -111,4 +109,3 @@ venv_v2/
 .mypy_cache/
 .vscode/
 .claude/
-env_oiolabot/OiOlabot
