@@ -21,6 +21,15 @@ class AdminMainMixin:
             MessageHandler(self._on_admin, filters.command("admin"))
         )
         self.client.add_handler(
+            MessageHandler(self._on_addadmin, filters.command("addadmin"))
+        )
+        self.client.add_handler(
+            MessageHandler(self._on_removeadmin, filters.command("removeadmin"))
+        )
+        self.client.add_handler(
+            MessageHandler(self._on_listadmin, filters.command("listadmin"))
+        )
+        self.client.add_handler(
             MessageHandler(self._on_backup, filters.command("backup"))
         )
         self.client.add_handler(
@@ -60,8 +69,16 @@ class AdminMainMixin:
             logger.error(f"Error in _on_owner: {e}")
             await message.reply("Erro ao definir proprietário.")
 
+    async def _check_admin(self, user_id: int) -> bool:
+        """Check if user is an admin."""
+        return await self.db.is_admin(user_id)
+
     async def _on_admin(self, client, message):
-        """Send admin commands list."""
+        """Send admin commands list (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         admin_text = (
             "**Comandos de Admin**\n\n"
             "**Configuração do Grupo:**\n"
@@ -73,12 +90,89 @@ class AdminMainMixin:
             "**Banco de Dados:**\n"
             "/backup — Faz backup do banco de dados\n"
             "/getkey <padrão> — Busca chaves no Redis\n"
-            "/removekey <chave> — Remove chave do Redis\n"
+            "/removekey <chave> — Remove chave do Redis\n\n"
+            "**Gerenciamento de Admins:**\n"
+            "/addadmin <id> — Adiciona um administrador\n"
+            "/removeadmin <id> — Remove um administrador\n"
+            "/listadmin — Lista todos os administradores\n"
         )
         await message.reply(admin_text)
 
+    async def _on_addadmin(self, client, message):
+        """Add a user as admin (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
+        try:
+            args = message.text.split()
+            if len(args) < 2:
+                await message.reply("❌ Uso: `/addadmin <user_id>`")
+                return
+
+            user_id = int(args[1])
+            result = await self.db.add_admin(user_id)
+            if result:
+                await message.reply(f"✅ Usuário {user_id} adicionado como administrador.")
+            else:
+                await message.reply(f"⚠️ Usuário {user_id} já é administrador.")
+        except ValueError:
+            await message.reply("❌ ID inválido. Use um número.")
+        except Exception as e:
+            logger.error(f"Error in _on_addadmin: {e}")
+            await message.reply("❌ Erro ao adicionar administrador.")
+
+    async def _on_removeadmin(self, client, message):
+        """Remove a user as admin (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
+        try:
+            args = message.text.split()
+            if len(args) < 2:
+                await message.reply("❌ Uso: `/removeadmin <user_id>`")
+                return
+
+            user_id = int(args[1])
+            result = await self.db.remove_admin(user_id)
+            if result:
+                await message.reply(f"✅ Usuário {user_id} removido da administração.")
+            else:
+                await message.reply(f"⚠️ Usuário {user_id} não é administrador.")
+        except ValueError:
+            await message.reply("❌ ID inválido. Use um número.")
+        except Exception as e:
+            logger.error(f"Error in _on_removeadmin: {e}")
+            await message.reply("❌ Erro ao remover administrador.")
+
+    async def _on_listadmin(self, client, message):
+        """List all admins (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
+        try:
+            admins = await self.db.list_admins()
+            if not admins:
+                await message.reply("Nenhum administrador cadastrado.")
+                return
+
+            text = "**Administradores:**\n\n"
+            for admin_id in admins:
+                text += f"• {admin_id}\n"
+
+            await message.reply(text)
+        except Exception as e:
+            logger.error(f"Error in _on_listadmin: {e}")
+            await message.reply("❌ Erro ao listar administradores.")
+
     async def _on_backup(self, client, message):
-        """Send Redis backup file."""
+        """Send Redis backup file (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             result = await self.db.backup()
             if not result:
@@ -99,7 +193,11 @@ class AdminMainMixin:
             await message.reply("Erro ao fazer backup.")
 
     async def _on_deactivatedurl(self, client, message):
-        """List deactivated feeds."""
+        """List deactivated feeds (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             urls = await self.db.get_urls_deactivated()
             if not urls:
@@ -116,7 +214,11 @@ class AdminMainMixin:
             await message.reply("Erro ao listar feeds desativados.")
 
     async def _on_activateallurl(self, client, message):
-        """Activate all RSS feeds."""
+        """Activate all RSS feeds (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             result = await self.db.activate_all_urls()
             if result:
@@ -128,7 +230,11 @@ class AdminMainMixin:
             await message.reply("Erro ao ativar feeds.")
 
     async def _on_allurl(self, client, message):
-        """List all active feeds with metadata (split into multiple messages if needed)."""
+        """List all active feeds with metadata (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             urls = await self.db.get_urls_activated()
             if not urls:

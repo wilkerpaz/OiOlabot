@@ -137,6 +137,26 @@ class LiturgyDatabase(BaseDatabase):
         """Retrieve list of admin user IDs for liturgy bot."""
         return await self.redis.lrange("admins", 0, -1)
 
+    async def add_admin(self, user_id: int) -> bool:
+        """Add a user to the admin list."""
+        user_id_str = str(user_id)
+        admins = await self.list_admins()
+        if user_id_str in admins:
+            return False  # Already admin
+        result = await self.redis.rpush("admins", user_id_str)
+        return result is not None and result > 0
+
+    async def remove_admin(self, user_id: int) -> bool:
+        """Remove a user from the admin list."""
+        user_id_str = str(user_id)
+        result = await self.redis.lrem("admins", 0, user_id_str)
+        return result > 0
+
+    async def is_admin(self, user_id: int) -> bool:
+        """Check if a user is an admin."""
+        admins = await self.list_admins()
+        return str(user_id) in admins
+
     async def deactivate_subscription(self, chat_id: int) -> bool:
         """Disable daily liturgy for a chat (e.g., bot blocked or kicked)."""
         names = await self._find(f"daily_liturgy:*chat_id:{chat_id}*")
