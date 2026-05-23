@@ -41,14 +41,28 @@ class FeedJob:
     async def _process_url(self, client: httpx.AsyncClient, url: str) -> None:
         """Process a single feed URL."""
         try:
-            # Get URL metadata
+            # Get URL metadata (last update and last entry ID)
             metadata = await self.db.get_url_metadata(url)
             last_update_str = metadata.get("last_update") if metadata else None
+            last_entry_id = metadata.get("last_entry") if metadata else None
 
-            # Parse the feed
-            entries = await FeedHandler.parse_feed(url, entries=4)
+            # Parse the feed (get up to 10 entries to find new ones)
+            entries = await FeedHandler.parse_feed(url, entries=10)
             if not entries:
                 logger.debug(f"No entries found for {url}")
+                return
+
+            # Filter: only send NEW entries (not processed before)
+            new_entries = []
+            for entry in entries:
+                entry_id = entry.get("id") or entry.get("link")
+                # Stop at the last processed entry
+                if last_entry_id and entry_id == last_entry_id:
+                    break
+                new_entries.append(entry)
+
+            if not new_entries:
+                logger.debug(f"No new entries for {url} (already processed)")
                 return
 
             # Get subscribed chats
@@ -57,18 +71,20 @@ class FeedJob:
                 logger.debug(f"No subscribed chats for {url}")
                 return
 
-            # Send to each chat and track if at least one succeeded
+            # Send NEW entries to each chat
             success_count = 0
             for chat in chats:
-                if await self._send_entries_to_chat(client, chat["chat_id"], entries):
+                if await self._send_entries_to_chat(client, chat["chat_id"], new_entries):
                     success_count += 1
 
             # Update metadata only if at least one send succeeded
             if success_count > 0:
                 now = DateHandler.get_datetime_now()
-                await self.db.update_url_metadata(url, str(now), str(entries[0]) if entries else "")
-
-            logger.info(f"Processed {url} for {len(chats)} chat(s) ({success_count} succeeded)")
+                latest_entry_id = new_entries[0].get("id") or new_entries[0].get("link")
+                await self.db.update_url_metadata(url, str(now), latest_entry_id)
+                logger.info(f"Processed {url}: sent {len(new_entries)} new entry(ies) to {len(chats)} chat(s)")
+            else:
+                logger.warning(f"Failed to send entries from {url} to any chat")
 
         except Exception as e:
             logger.error(f"Error processing URL {url}: {e}")
