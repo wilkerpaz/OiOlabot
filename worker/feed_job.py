@@ -15,10 +15,11 @@ logger = logging.getLogger(__name__)
 class FeedJob:
     """Background job to distribute RSS feeds to subscribers."""
 
-    def __init__(self, db: BaseDatabase, bot_token: str):
-        """Initialize with database and bot token."""
+    def __init__(self, db: BaseDatabase, bot_token: str, group_link: str = None):
+        """Initialize with database, bot token, and optional group link."""
         self.db = db
         self.bot_token = bot_token
+        self.group_link = group_link
         self.api_url = f"https://api.telegram.org/bot{bot_token}"
 
     async def run(self) -> None:
@@ -154,7 +155,11 @@ class FeedJob:
                 if summary:
                     text += f"{summary}\n"
             if link:
-                text += link
+                text += f"{link}"
+
+            # Add group/channel link footer if configured
+            if self.group_link:
+                text += f"\n\n{self.group_link}"
 
             return text.strip()
         except Exception as e:
