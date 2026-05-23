@@ -172,39 +172,52 @@ class AdminMainMixin:
             await message.reply("❌ Erro ao listar administradores.")
 
     async def _on_backup(self, client, message):
-        """Send Redis backup file (admin only)."""
+        """Create and send Redis backup file (admin only)."""
         if not await self._check_admin(message.from_user.id):
             await message.reply("❌ Você não é administrador.")
             return
 
         try:
+            await message.reply("⏳ Criando backup do banco de dados...")
+
+            # Trigger Redis backup
             result = await self.db.backup()
             if not result:
-                await message.reply("Backup já foi feito hoje.")
-                return
+                await message.reply("⚠️ Backup já foi feito hoje. Tentando enviar o arquivo anterior...")
 
             # Get Redis backup path from .env
             redis_path = os.getenv("PATH_REDIS", "/var/lib/redis/dump.rdb")
-            logger.info(f"Backup path from .env: {redis_path}")
+            logger.info(f"Backup path: {redis_path}")
 
             if not os.path.exists(redis_path):
                 logger.error(f"Backup file not found at: {redis_path}")
                 await message.reply(f"❌ Arquivo de backup não encontrado em `{redis_path}`")
                 return
 
-            # Get file size
+            # Verify file size and readability
             file_size = os.path.getsize(redis_path)
+            if file_size == 0:
+                logger.error(f"Backup file is empty: {redis_path}")
+                await message.reply("❌ Arquivo de backup está vazio.")
+                return
+
             file_size_mb = file_size / (1024 * 1024)
+            logger.info(f"Backup file ready: {file_size_mb:.2f} MB")
 
             # Send backup file
-            await message.reply_document(
-                document=redis_path,
-                caption=f"Backup Redis\n📦 Tamanho: {file_size_mb:.2f} MB\n⏰ {DateHandler.get_datetime_now().strftime('%Y-%m-%d %H:%M:%S')}"
-            )
-            logger.info(f"Backup sent: {redis_path} ({file_size_mb:.2f} MB)")
+            async with open(redis_path, "rb") as backup_file:
+                caption = f"Backup Redis 💾\n📦 Tamanho: {file_size_mb:.2f} MB\n⏰ {DateHandler.get_datetime_now().strftime('%Y-%m-%d %H:%M:%S')}"
+                await message.reply_document(
+                    document=backup_file,
+                    caption=caption,
+                    file_name=f"redis_dump_{DateHandler.get_datetime_now().strftime('%Y%m%d_%H%M%S')}.rdb"
+                )
+            logger.info(f"Backup sent successfully: {file_size_mb:.2f} MB")
+            await message.reply("✅ Backup concluído e arquivo enviado.")
+
         except Exception as e:
             logger.error(f"Error in _on_backup: {e}", exc_info=True)
-            await message.reply("❌ Erro ao fazer backup.")
+            await message.reply(f"❌ Erro ao fazer backup: {type(e).__name__}")
 
     async def _on_deactivatedurl(self, client, message):
         """List deactivated feeds (admin only)."""
