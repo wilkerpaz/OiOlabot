@@ -102,22 +102,117 @@ class FeedMixin:
             await message.reply(f"❌ Erro ao adicionar feed.")
 
     async def list_feed_urls(self, client, message):
-        """List all active RSS subscriptions for current chat."""
+        """List RSS subscriptions: direct with bot (if DM) or grouped by chat."""
         chat_id = message.chat.id
+        user_id = message.from_user.id
+        is_dm = chat_id > 0
 
         try:
-            urls = await self.db.get_chat_urls(chat_id)
-            if not urls:
-                await message.reply("Nenhum feed cadastrado neste chat.")
-                return
+            if is_dm:
+                # DM: show all URLs grouped by chat/group
+                await self._list_feeds_by_chat(user_id, message)
+            else:
+                # Group: show only URLs for this group
+                urls = await self.db.get_chat_urls(chat_id)
+                if not urls:
+                    await message.reply("Nenhum feed cadastrado neste grupo.")
+                    return
 
-            text = "📰 **Feeds ativos:**\n\n"
-            for i, url in enumerate(urls, 1):
-                text += f"{i}. `{url}`\n"
+                text = "📰 **Feeds ativos neste grupo:**\n\n"
+                for i, url in enumerate(urls, 1):
+                    text += f"{i}. `{url}`\n"
 
-            await message.reply(text)
+                await message.reply(text)
         except Exception as e:
             logger.error(f"Error listing feeds: {e}")
+            await message.reply("❌ Erro ao listar feeds.")
+
+    async def _list_feeds_by_chat(self, user_id: int, message) -> None:
+        """List all feeds grouped by chat (for DM usage)."""
+        try:
+            # Get all subscription keys for this user
+            names = await self.db._find(f"user_url:{user_id}:chat_id:*")
+            if not names:
+                await message.reply("Você não possui feeds cadastrados.")
+                return
+
+            # Group by chat_id and extract chat_name from subscription data
+            chats_feeds = {}
+            for name in names:
+                # Extract URL and chat_id from key name
+                # Format: user_url:{user_id}:chat_id:{chat_id}:^{url}^
+                if "^" in name:
+                    url = name.split("^")[1]
+                    # Extract chat_id from key
+                    parts = name.split(":")
+                    try:
+                        chat_id_idx = parts.index("chat_id")
+                        chat_id = int(parts[chat_id_idx + 1])
+                    except (ValueError, IndexError):
+                        continue
+
+                    # Check if active
+                    disable_status = await self.db.redis.hget(name, "disable")
+                    if disable_status != "True":
+                        # Get chat_name from subscription data
+                        chat_name = await self.db.redis.hget(name, "chat_name")
+                        if chat_name:
+                            chat_name = chat_name.decode() if isinstance(chat_name, bytes) else chat_name
+                        else:
+                            chat_name = f"Chat {chat_id}"
+
+                        if chat_id not in chats_feeds:
+                            chats_feeds[chat_id] = {"name": chat_name, "urls": []}
+                        chats_feeds[chat_id]["urls"].append(url)
+
+            if not chats_feeds:
+                await message.reply("Você não possui feeds ativos cadastrados.")
+                return
+
+            # Build message with feeds grouped by chat
+            messages = []
+            current_text = "📰 **Seus Feeds:**\n\n"
+            max_length = 3500
+
+            for chat_id in sorted(chats_feeds.keys()):
+                chat_info = chats_feeds[chat_id]
+                chat_title = chat_info["name"]
+
+                # Add chat header
+                chat_header = f"**{chat_title}**:\n"
+
+                # Add all URLs for this chat
+                urls_text = ""
+                for url in chat_info["urls"]:
+                    urls_text += f"  • `{url}`\n"
+
+                section_text = chat_header + urls_text + "\n"
+
+                # Check if adding this section would exceed limit
+                if len(current_text) + len(section_text) > max_length:
+                    if current_text.strip() and current_text != "📰 **Seus Feeds:**\n\n":
+                        messages.append(current_text.strip())
+                    current_text = "📰 **Seus Feeds (cont.):**\n\n" + section_text
+                else:
+                    current_text += section_text
+
+            # Add remaining text
+            if current_text.strip() and current_text != "📰 **Seus Feeds:**\n\n":
+                messages.append(current_text.strip())
+
+            if not messages:
+                await message.reply("Você não possui feeds ativos cadastrados.")
+                return
+
+            # Send all messages
+            for msg in messages:
+                if len(msg) > 4096:
+                    logger.warning(f"Message exceeds 4096 chars ({len(msg)}), truncating")
+                    msg = msg[:4000] + "..."
+                await message.reply(msg)
+
+        except Exception as e:
+            logger.error(f"Error listing feeds by chat: {e}", exc_info=True)
             await message.reply("❌ Erro ao listar feeds.")
 
     async def remove_feed_url(self, client, message):
