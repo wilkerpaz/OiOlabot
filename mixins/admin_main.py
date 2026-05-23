@@ -6,6 +6,8 @@ from pyrogram import filters
 from pyrogram.handlers import MessageHandler
 from pyrogram.types import Document
 
+from util.datehandler import DateHandler
+
 logger = logging.getLogger(__name__)
 
 
@@ -256,7 +258,8 @@ class AdminMainMixin:
             # Build messages, splitting if text exceeds Telegram's 4096 char limit
             messages = []
             current_text = "**Feeds Ativos:**\n\n"
-            max_length = 4000  # Leave room for safety margin
+            max_length = 3500  # Conservative limit (Telegram max is 4096, but account for overhead)
+            page_num = 1
 
             for url in urls:
                 metadata = await self.db.get_url_metadata(url)
@@ -267,22 +270,31 @@ class AdminMainMixin:
 
                     # If adding this entry would exceed limit, save current message and start new one
                     if len(current_text) + len(entry_text) > max_length:
-                        messages.append(current_text)
-                        current_text = f"**Feeds Ativos (cont.):**\n\n{entry_text}"
+                        if current_text.strip():
+                            messages.append(current_text.strip())
+                        page_num += 1
+                        current_text = f"**Feeds Ativos (página {page_num}):**\n\n{entry_text}"
                     else:
                         current_text += entry_text
 
             # Add remaining text
-            if current_text != "**Feeds Ativos:**\n\n":
-                messages.append(current_text)
+            if current_text.strip() and current_text != "**Feeds Ativos:**\n\n":
+                messages.append(current_text.strip())
+
+            if not messages:
+                await message.reply("Nenhum feed com metadados encontrado.")
+                return
 
             # Send all messages
             for msg in messages:
+                if len(msg) > 4096:
+                    logger.warning(f"Message exceeds 4096 chars ({len(msg)}), truncating")
+                    msg = msg[:4000] + "..."
                 await message.reply(msg)
 
         except Exception as e:
             logger.error(f"Error in _on_allurl: {e}", exc_info=True)
-            await message.reply("Erro ao listar feeds.")
+            await message.reply(f"❌ Erro ao listar feeds: {type(e).__name__}")
 
     async def _on_deactivated(self, client, message):
         """List deactivated URLs (admin only)."""
