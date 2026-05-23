@@ -161,6 +161,25 @@ class MainDatabase(BaseDatabase):
             return None
         return await self.redis.hgetall(key)
 
+    async def remove_group_config(self, chat_id: int) -> bool:
+        """Remove group configuration."""
+        key = f"group:{chat_id}"
+        deleted = await self.redis.delete(key)
+        return deleted > 0
+
+    async def deactivate_url_for_chat(self, chat_id: int) -> bool:
+        """Disable all URL subscriptions for a chat (e.g., bot blocked or kicked)."""
+        names = await self._find(f"user_url:*chat_id:{chat_id}*")
+        if not names:
+            return False
+
+        async with self.redis.pipeline() as pipe:
+            for name in names:
+                pipe.hset(name, mapping={"disable": "True"})
+            await pipe.execute()
+
+        return True
+
     async def backup(self) -> bool:
         """Trigger a Redis backup if conditions are met."""
         now = DateHandler.get_datetime_now()

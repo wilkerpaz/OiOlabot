@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from util.database.base import BaseDatabase
 from util.feedhandler import FeedHandler
 from util.datehandler import DateHandler
+from worker.error_handler import ErrorHandler
 
 logger = logging.getLogger(__name__)
 
@@ -54,22 +55,27 @@ class FeedJob:
                 logger.debug(f"No subscribed chats for {url}")
                 return
 
-            # Send to each chat
+            # Send to each chat and track if at least one succeeded
+            success_count = 0
             for chat in chats:
-                await self._send_entries_to_chat(client, chat["chat_id"], entries)
+                if await self._send_entries_to_chat(client, chat["chat_id"], entries):
+                    success_count += 1
 
-            # Update metadata
-            now = DateHandler.get_datetime_now()
-            await self.db.update_url_metadata(url, str(now), str(entries[0]) if entries else "")
-            logger.info(f"Processed {url} for {len(chats)} chat(s)")
+            # Update metadata only if at least one send succeeded
+            if success_count > 0:
+                now = DateHandler.get_datetime_now()
+                await self.db.update_url_metadata(url, str(now), str(entries[0]) if entries else "")
+
+            logger.info(f"Processed {url} for {len(chats)} chat(s) ({success_count} succeeded)")
 
         except Exception as e:
             logger.error(f"Error processing URL {url}: {e}")
 
     async def _send_entries_to_chat(
         self, client: httpx.AsyncClient, chat_id: int, entries: list
-    ) -> None:
-        """Send feed entries to a chat."""
+    ) -> bool:
+        """Send feed entries to a chat. Return True if at least one succeeded."""
+        success_count = 0
         try:
             for entry in entries:
                 text = self._format_entry(entry)
@@ -88,12 +94,26 @@ class FeedJob:
                     json=payload,
                 )
 
-                if response.status_code != 200:
-                    logger.warning(
-                        f"Failed to send to {chat_id}: {response.status_code} - {response.text}"
-                    )
+                strategy, error_details = ErrorHandler.classify_response(response)
+
+                if strategy == "success":
+                    success_count += 1
+                elif strategy == "permanent":
+                    ErrorHandler.log_error(chat_id, error_details, strategy)
+                    await self.db.deactivate_url_for_chat(chat_id)
+                    return False  # Stop sending to this chat
+                elif strategy == "transient":
+                    ErrorHandler.log_error(chat_id, error_details, strategy)
+                    # Continue trying other entries
+                else:
+                    ErrorHandler.log_error(chat_id, error_details, strategy)
+                    # Continue
+
+            return success_count > 0
+
         except Exception as e:
             logger.error(f"Error sending entries to {chat_id}: {e}")
+            return False
 
     def _format_entry(self, entry: dict) -> str:
         """Format a feed entry as HTML message."""

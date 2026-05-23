@@ -34,7 +34,7 @@ class HomiliaScraper(BaseScraper):
     async def fetch(self) -> str | None:
         """Fetch today's homily text."""
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with self.make_client(timeout=10.0) as client:
                 # Fetch the homily page
                 response = await client.get("https://homilia.cancaonova.com/pb/")
                 response.raise_for_status()

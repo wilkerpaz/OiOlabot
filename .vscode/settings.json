@@ -2,8 +2,6 @@
     "python.defaultInterpreterPath": "${workspaceFolder}/venv_v2/bin/python",
     "python.terminal.activateEnvironment": true,
     "python.terminal.activateEnvInCurrentTerminal": true,
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
     "terminal.integrated.env.linux": {
         "VIRTUAL_ENV": "${workspaceFolder}/venv_v2",
         "PATH": "${workspaceFolder}/venv_v2/bin:${env:PATH}"
@@ -19,6 +17,9 @@
     "files.exclude": {
         "**/__pycache__": true,
         "**/*.pyc": true,
-        "**/.*": true
+        "**/.git": true,
+        "**/.pytest_cache": true,
+        "**/.venv": true,
+        "**/env_oiolabot": true
     }
 }

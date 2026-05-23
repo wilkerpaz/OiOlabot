@@ -1,7 +1,7 @@
 import logging
 import re
-from datetime import datetime, date
-from dateutil import parser
+from datetime import date
+
 import httpx
 from bs4 import BeautifulSoup
 
@@ -22,13 +22,24 @@ class LiturgiaScraper(BaseScraper):
         self.dia = str(target_date.day)
         self.mes = str(target_date.month)
         self.ano = str(target_date.year)
-        # Format date as "Friday, May 23, 2026" for display
-        self.formatted_date = target_date.strftime("%A, %B %d, %Y")
+        # Format date in Portuguese: "sexta-feira, 23 de maio de 2026"
+        self.formatted_date = self._format_portuguese_date(target_date)
+
+    def _format_portuguese_date(self, dt: date) -> str:
+        """Format date in Portuguese style."""
+        days_pt = ["segunda-feira", "terça-feira", "quarta-feira",
+                   "quinta-feira", "sexta-feira", "sábado", "domingo"]
+        months_pt = ["janeiro", "fevereiro", "março", "abril", "maio", "junho",
+                     "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+
+        day_name = days_pt[dt.weekday()]
+        month_name = months_pt[dt.month - 1]
+        return f"{day_name}, {dt.day} de {month_name} de {dt.year}"
 
     async def fetch(self) -> str | None:
         """Fetch today's scripture reading."""
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with self.make_client(timeout=10.0) as client:
                 # Step 1: Get the URL for this specific date
                 payload = {
                     "action": "widget-ajax",

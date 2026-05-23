@@ -5,6 +5,7 @@ from util.database.base import BaseDatabase
 from util.scrapers.base import BaseScraper
 from util.scrapers.liturgia import LiturgiaScraper
 from util.datehandler import DateHandler
+from worker.error_handler import ErrorHandler
 
 logger = logging.getLogger(__name__)
 
@@ -45,19 +46,21 @@ class LiturgyJob:
 
             # Send to all subscribed chats
             async with httpx.AsyncClient(timeout=30) as client:
+                success_count = 0
                 for chat_id in chat_ids:
-                    await self._send_to_chat(client, chat_id, text)
-                    await self.db.set_last_send(chat_id)
+                    if await self._send_to_chat(client, chat_id, text):
+                        await self.db.set_last_send(chat_id)
+                        success_count += 1
 
-            logger.info(f"Sent daily liturgy to {len(chat_ids)} chat(s)")
+            logger.info(f"Sent daily liturgy to {len(chat_ids)} chat(s) ({success_count} succeeded)")
 
         except Exception as e:
             logger.error(f"LiturgyJob error: {e}", exc_info=True)
 
     async def _send_to_chat(
         self, client: httpx.AsyncClient, chat_id: int, text: str
-    ) -> None:
-        """Send liturgy text to a chat."""
+    ) -> bool:
+        """Send liturgy text to a chat. Return True if successful."""
         try:
             payload = {
                 "chat_id": chat_id,
@@ -70,9 +73,18 @@ class LiturgyJob:
                 json=payload,
             )
 
-            if response.status_code != 200:
-                logger.warning(
-                    f"Failed to send liturgy to {chat_id}: {response.status_code} - {response.text}"
-                )
+            strategy, error_details = ErrorHandler.classify_response(response)
+
+            if strategy == "success":
+                return True
+            elif strategy == "permanent":
+                ErrorHandler.log_error(chat_id, error_details, strategy)
+                await self.db.deactivate_subscription(chat_id)
+                return False
+            else:
+                ErrorHandler.log_error(chat_id, error_details, strategy)
+                return False
+
         except Exception as e:
             logger.error(f"Error sending to {chat_id}: {e}")
+            return False

@@ -18,6 +18,15 @@ class WelcomeMixin:
             MessageHandler(self._on_left_chat_member, filters.left_chat_member)
         )
         self.client.add_handler(
+            MessageHandler(self.start_bot, filters.command("start"))
+        )
+        self.client.add_handler(
+            MessageHandler(self.stop_bot, filters.command("stop"))
+        )
+        self.client.add_handler(
+            MessageHandler(self.chat_info, filters.command("me"))
+        )
+        self.client.add_handler(
             MessageHandler(self.set_welcome, filters.command("welcome") & filters.group)
         )
         self.client.add_handler(
@@ -231,6 +240,63 @@ class WelcomeMixin:
 
         config["chat_quiet"] = "False"
         await self.db.set_group_config(chat_id, config)
+
+    async def start_bot(self, client, message):
+        """Register chat and send welcome message."""
+        chat_id = message.chat.id
+        chat_name = message.chat.username or message.chat.title or "Unknown"
+        user_id = message.from_user.id
+
+        try:
+            config = await self.db.get_group_config(chat_id)
+            if config:
+                await message.reply("Bot já registrado neste grupo.")
+                return
+
+            await self.db.set_group_config(chat_id, {
+                "chat_adm": str(user_id),
+                "chat_name": chat_name,
+                "chat_welcome": "False",
+                "chat_goodbye": "False",
+                "chat_lock": "False",
+                "chat_quiet": "False",
+            })
+            await message.reply(
+                "✅ Bot ativado neste grupo!\n\n"
+                "Use /help para ver os comandos disponíveis."
+            )
+        except Exception as e:
+            logger.error(f"Error in start_bot: {e}")
+            await message.reply("Erro ao ativar o bot.")
+
+    async def stop_bot(self, client, message):
+        """Deactivate bot for this chat."""
+        chat_id = message.chat.id
+        try:
+            await self.db.remove_group_config(chat_id)
+            await message.reply(
+                "Bot desativado. Você não receberá mais atualizações até usar /start novamente."
+            )
+        except Exception as e:
+            logger.error(f"Error in stop_bot: {e}")
+            await message.reply("Erro ao desativar o bot.")
+
+    async def chat_info(self, client, message):
+        """Send chat information."""
+        chat = message.chat
+        info_text = (
+            f"**Informações do Chat**\n\n"
+            f"ID: `{chat.id}`\n"
+            f"Tipo: {chat.type}\n"
+        )
+        if chat.title:
+            info_text += f"Título: {chat.title}\n"
+        if chat.username:
+            info_text += f"Username: @{chat.username}\n"
+        if chat.description:
+            info_text += f"Descrição: {chat.description}\n"
+
+        await message.reply(info_text)
 
     async def _check_permissions(self, chat_id: int, user_id: int, config: dict) -> bool:
         """Check if user can modify group settings."""

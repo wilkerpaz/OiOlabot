@@ -13,7 +13,7 @@ class SantoScraper(BaseScraper):
     async def fetch(self) -> str | None:
         """Fetch today's saint information."""
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with self.make_client(timeout=10.0) as client:
                 response = await client.get("https://santo.cancaonova.com/")
                 response.raise_for_status()
 

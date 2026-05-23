@@ -8,6 +8,24 @@ logger = logging.getLogger(__name__)
 class LiturgyDatabase(BaseDatabase):
     """Database handler for the liturgy bot (daily subscriptions, audio cache)."""
 
+    async def get_group_config(self, chat_id: int) -> dict | None:
+        """Retrieve configuration for a group."""
+        key = f"group:{chat_id}"
+        if not await self.exists(key):
+            return None
+        return await self.redis.hgetall(key)
+
+    async def set_group_config(self, chat_id: int, config: dict) -> bool:
+        """Store group configuration."""
+        key = f"group:{chat_id}"
+        return await self.redis.hset(key, mapping=config) is not None
+
+    async def remove_group_config(self, chat_id: int) -> bool:
+        """Remove group configuration."""
+        key = f"group:{chat_id}"
+        deleted = await self.redis.delete(key)
+        return deleted > 0
+
     async def add_daily_liturgy_subscription(
         self, chat_id: int, chat_name: str, user_id: int
     ) -> bool:
@@ -110,3 +128,16 @@ class LiturgyDatabase(BaseDatabase):
     async def list_admins(self) -> list[str]:
         """Retrieve list of admin user IDs for liturgy bot."""
         return await self.redis.lrange("admins", 0, -1)
+
+    async def deactivate_subscription(self, chat_id: int) -> bool:
+        """Disable daily liturgy for a chat (e.g., bot blocked or kicked)."""
+        names = await self._find(f"daily_liturgy:*chat_id:{chat_id}*")
+        if not names:
+            return False
+
+        async with self.redis.pipeline() as pipe:
+            for name in names:
+                pipe.hset(name, mapping={"disable": "True"})
+            await pipe.execute()
+
+        return True
