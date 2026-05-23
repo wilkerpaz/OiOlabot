@@ -29,22 +29,14 @@ async def main():
 
     scheduler = AsyncIOScheduler()
 
-    # Feed jobs for both bots
+    # Feed job for main bot (RSS distribution)
     main_feed_job = FeedJob(MainDatabase(int(config("DB", default="0"))), config("DEV_TOKEN"))
-    liturgy_feed_job = FeedJob(LiturgyDatabase(int(config("DB_LD", default="1"))), config("DEV_TOKEN_LD"))
 
     scheduler.add_job(
         main_feed_job.run,
         CronTrigger(minute="*/5"),  # Every 5 minutes
         id="feed_job_main",
         name="Feed distribution (main)",
-    )
-
-    scheduler.add_job(
-        liturgy_feed_job.run,
-        CronTrigger(minute="*/5"),  # Every 5 minutes
-        id="feed_job_liturgy",
-        name="Feed distribution (liturgy)",
     )
 
     # Daily liturgy job at 7 AM in America/Belem timezone
@@ -67,7 +59,7 @@ async def main():
     )
 
     scheduler.start()
-    logger.info("Scheduler started with 3 jobs")
+    logger.info("Scheduler started with 2 jobs: FeedJob (5min) + LiturgyJob (7am)")
 
     try:
         await asyncio.Event().wait()
