@@ -101,13 +101,21 @@ class LiturgyDatabase(BaseDatabase):
             await pipe.execute()
         return True
 
-    async def set_last_send(self, chat_id: int) -> bool:
+    async def get_last_send(self, chat_id: int) -> str | None:
+        """Retrieve last_send timestamp for a subscription."""
+        names = await self._find(f"daily_liturgy:*chat_id:{chat_id}*")
+        if not names:
+            return None
+        # Return last_send from first subscription for this chat
+        return await self.redis.hget(names[0], "last_send")
+
+    async def set_last_send(self, chat_id: int, timestamp: str | None = None) -> bool:
         """Update last_send timestamp for a subscription."""
         names = await self._find(f"daily_liturgy:*chat_id:{chat_id}*")
         if not names:
             return False
 
-        now = str(DateHandler.get_datetime_now())
+        now = timestamp or str(DateHandler.get_datetime_now())
         updated_count = 0
         for name in names:
             result = await self.redis.hset(name, mapping={"last_send": now})

@@ -24,10 +24,10 @@ class LiturgyJob:
         self.api_url = f"https://api.telegram.org/bot{bot_token}"
 
     async def run(self) -> None:
-        """Execute the daily liturgy job."""
+        """Execute the daily liturgy job with date/time validation (v1 logic)."""
         logger.info(f"LiturgyJob running for token {self.bot_token[:10]}...")
         try:
-            # Get today's date
+            # Get today's date and time
             now = DateHandler.get_datetime_now()
             today = DateHandler.date(now)
             today_str = str(today)
@@ -46,27 +46,41 @@ class LiturgyJob:
                 logger.debug("No active subscriptions")
                 return
 
-            # Send liturgy text to all subscribed chats
+            # Send liturgy text to all subscribed chats with date/time validation
             async with httpx.AsyncClient(timeout=30) as client:
                 success_count = 0
                 for chat_id in chat_ids:
-                    if await self._send_to_chat(client, chat_id, text):
-                        await self.db.set_last_send(chat_id)
+                    if await self._send_to_chat(client, chat_id, text, now):
                         success_count += 1
 
-            logger.info(f"Sent daily liturgy to {len(chat_ids)} chat(s) ({success_count} succeeded)")
+            logger.info(f"Sent daily liturgy to {success_count}/{len(chat_ids)} chat(s)")
 
-            # Fetch and send audio after liturgy text
-            await self._send_audio_to_all(chat_ids, today_str)
+            # Fetch and send audio after liturgy text (only if text was sent to at least one chat)
+            if success_count > 0:
+                await self._send_audio_to_all(chat_ids, today_str)
 
         except Exception as e:
             logger.error(f"LiturgyJob error: {e}", exc_info=True)
 
     async def _send_to_chat(
-        self, client: httpx.AsyncClient, chat_id: int, text: str
+        self, client: httpx.AsyncClient, chat_id: int, text: str, send_time
     ) -> bool:
-        """Send liturgy text to a chat. Return True if successful."""
+        """Send liturgy text to a chat with date validation. Return True if successful."""
         try:
+            # Get chat's last send date/time
+            last_send_str = await self.db.get_last_send(chat_id)
+            last_send = None
+            if last_send_str:
+                try:
+                    last_send = DateHandler.parse_datetime(last_send_str)
+                except Exception as e:
+                    logger.warning(f"Could not parse last_send {last_send_str} for {chat_id}: {e}")
+
+            # Validate: skip if send_time <= last_send (already sent today)
+            if last_send and send_time <= last_send:
+                logger.debug(f"Chat {chat_id}: already received today ({last_send}), skipping")
+                return False
+
             payload = {
                 "chat_id": chat_id,
                 "text": text,
@@ -81,6 +95,8 @@ class LiturgyJob:
             strategy, error_details = ErrorHandler.classify_response(response)
 
             if strategy == "success":
+                # Update last send time only on success
+                await self.db.set_last_send(chat_id, str(send_time))
                 return True
             elif strategy == "permanent":
                 ErrorHandler.log_error(chat_id, error_details, strategy)
