@@ -41,15 +41,22 @@ class FeedJob:
     async def _process_url(self, client: httpx.AsyncClient, url: str) -> None:
         """Process a single feed URL."""
         try:
-            # Get URL metadata (last update and last entry ID)
+            # Get URL metadata (last update, last entry ID, last URL)
             metadata = await self.db.get_url_metadata(url)
             last_update_str = metadata.get("last_update") if metadata else None
             last_entry_id = metadata.get("last_entry") if metadata else None
+            last_url = metadata.get("last_url") if metadata else None
 
-            # Parse the feed (get up to 10 entries to find new ones)
-            entries = await FeedHandler.parse_feed(url, entries=10)
+            # Parse the feed (get up to 4 entries to find new ones)
+            entries = await FeedHandler.parse_feed(url, entries=4)
             if not entries:
                 logger.debug(f"No entries found for {url}")
+                return
+
+            # Check if first entry URL is different from last_url
+            first_entry_url = entries[0].get("link", "")
+            if last_url and first_entry_url == last_url:
+                logger.debug(f"No new entries for {url} (first URL hasn't changed)")
                 return
 
             # Filter: only send NEW entries (not processed before)
@@ -86,7 +93,8 @@ class FeedJob:
             if success_count > 0:
                 now = DateHandler.get_datetime_now()
                 latest_entry_id = new_entries[0].get("id") or new_entries[0].get("link")
-                await self.db.update_url_metadata(url, str(now), latest_entry_id)
+                latest_entry_url = new_entries[0].get("link", "")
+                await self.db.update_url_metadata(url, str(now), latest_entry_url)
                 logger.info(f"Processed {url}: sent {len(new_entries)} new entry(ies) to {len(chats)} chat(s)")
             else:
                 logger.warning(f"Failed to send entries from {url} to any chat")
@@ -108,8 +116,7 @@ class FeedJob:
                 payload = {
                     "chat_id": chat_id,
                     "text": text,
-                    "parse_mode": "HTML",
-                    "disable_web_page_preview": True,
+                    "disable_web_page_preview": False,
                 }
 
                 response = await client.post(
@@ -139,29 +146,21 @@ class FeedJob:
             return False
 
     async def _format_entry(self, entry: dict, client: httpx.AsyncClient, chat_id: int) -> str:
-        """Format a feed entry as HTML message with group/channel link footer."""
+        """Format a feed entry: title + link + group link (plain text, no HTML)."""
         try:
             title = entry.get("title", "").strip()
             link = entry.get("link", "").strip()
-            summary = entry.get("summary", entry.get("description", "")).strip()
 
-            if not title:
+            if not title or not link:
                 return ""
 
-            # Clean HTML tags from title and summary
+            # Clean HTML tags from title
             title = self._clean_html(title)
-            summary = self._clean_html(summary)
 
-            text = f"<b>{title}</b>\n"
-            if summary:
-                # Truncate summary to 250 chars and clean
-                summary = summary[:250].strip()
-                if summary:
-                    text += f"{summary}\n"
-            if link:
-                text += link
+            # Simple format: Title\nLink\n\ngroup_link
+            text = f"{title}\n{link}"
 
-            # Add group/channel link footer (matching v1 behavior)
+            # Add group/channel link footer
             group_link = await self._get_chat_link(client, chat_id)
             if group_link:
                 text += f"\n\n{group_link}"
