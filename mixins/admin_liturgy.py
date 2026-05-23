@@ -21,6 +21,15 @@ class AdminLiturgyMixin:
             MessageHandler(self._on_admin, filters.command("admin"))
         )
         self.client.add_handler(
+            MessageHandler(self._on_addadmin, filters.command("addadmin"))
+        )
+        self.client.add_handler(
+            MessageHandler(self._on_removeadmin, filters.command("removeadmin"))
+        )
+        self.client.add_handler(
+            MessageHandler(self._on_listadmin, filters.command("listadmin"))
+        )
+        self.client.add_handler(
             MessageHandler(self._on_senddailyliturgy, filters.command("senddailyliturgy"))
         )
         self.client.add_handler(
@@ -42,8 +51,16 @@ class AdminLiturgyMixin:
             MessageHandler(self._on_userliturgydeactivated, filters.command("userliturgydeactivated"))
         )
 
+    async def _check_admin(self, user_id: int) -> bool:
+        """Check if user is an admin."""
+        return await self.db.is_admin(user_id)
+
     async def _on_admin(self, client, message):
-        """Send admin commands list."""
+        """Send admin commands list (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         admin_text = (
             "**Comandos de Admin (Liturgia)**\n\n"
             "**Envio Manual:**\n"
@@ -55,12 +72,89 @@ class AdminLiturgyMixin:
             "/deactivated — Lista usuários com assinatura desativada\n\n"
             "**Informações:**\n"
             "/userinfoliturgy — Detalhes de cada assinatura ativa\n"
-            "/userliturgydeactivated — Lista de assinaturas desativadas\n"
+            "/userliturgydeactivated — Lista de assinaturas desativadas\n\n"
+            "**Gerenciamento de Admins:**\n"
+            "/addadmin <id> — Adiciona um administrador\n"
+            "/removeadmin <id> — Remove um administrador\n"
+            "/listadmin — Lista todos os administradores\n"
         )
         await message.reply(admin_text)
 
+    async def _on_addadmin(self, client, message):
+        """Add a user as admin (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
+        try:
+            args = message.text.split()
+            if len(args) < 2:
+                await message.reply("❌ Uso: `/addadmin <user_id>`")
+                return
+
+            user_id = int(args[1])
+            result = await self.db.add_admin(user_id)
+            if result:
+                await message.reply(f"✅ Usuário {user_id} adicionado como administrador.")
+            else:
+                await message.reply(f"⚠️ Usuário {user_id} já é administrador.")
+        except ValueError:
+            await message.reply("❌ ID inválido. Use um número.")
+        except Exception as e:
+            logger.error(f"Error in _on_addadmin: {e}")
+            await message.reply("❌ Erro ao adicionar administrador.")
+
+    async def _on_removeadmin(self, client, message):
+        """Remove a user as admin (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
+        try:
+            args = message.text.split()
+            if len(args) < 2:
+                await message.reply("❌ Uso: `/removeadmin <user_id>`")
+                return
+
+            user_id = int(args[1])
+            result = await self.db.remove_admin(user_id)
+            if result:
+                await message.reply(f"✅ Usuário {user_id} removido da administração.")
+            else:
+                await message.reply(f"⚠️ Usuário {user_id} não é administrador.")
+        except ValueError:
+            await message.reply("❌ ID inválido. Use um número.")
+        except Exception as e:
+            logger.error(f"Error in _on_removeadmin: {e}")
+            await message.reply("❌ Erro ao remover administrador.")
+
+    async def _on_listadmin(self, client, message):
+        """List all admins (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
+        try:
+            admins = await self.db.list_admins()
+            if not admins:
+                await message.reply("Nenhum administrador cadastrado.")
+                return
+
+            text = "**Administradores:**\n\n"
+            for admin_id in admins:
+                text += f"• {admin_id}\n"
+
+            await message.reply(text)
+        except Exception as e:
+            logger.error(f"Error in _on_listadmin: {e}")
+            await message.reply("❌ Erro ao listar administradores.")
+
     async def _on_senddailyliturgy(self, client, message):
-        """Send daily liturgy to all active subscribers manually."""
+        """Send daily liturgy to all active subscribers manually (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             await message.reply("⏳ Enviando liturgia do dia para todos...")
 
@@ -95,7 +189,11 @@ class AdminLiturgyMixin:
             await message.reply("Erro ao enviar liturgia.")
 
     async def _on_sendaudioliturgy(self, client, message):
-        """Send daily audio to all active subscribers manually."""
+        """Send daily audio to all active subscribers manually (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             await message.reply("⏳ Enviando áudio da homilia para todos...")
 
@@ -137,7 +235,11 @@ class AdminLiturgyMixin:
             await message.reply("Erro ao enviar áudio.")
 
     async def _on_activateallliturgy(self, client, message):
-        """Activate all liturgy subscriptions."""
+        """Activate all liturgy subscriptions (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             result = await self.db.activate_all_subscriptions()
             if result:
@@ -149,7 +251,11 @@ class AdminLiturgyMixin:
             await message.reply("Erro ao ativar assinaturas.")
 
     async def _on_deactivated(self, client, message):
-        """List deactivated subscriptions."""
+        """List deactivated subscriptions (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             chat_ids = await self.db.get_deactivated_subscriptions()
             count = len(chat_ids)
@@ -159,7 +265,11 @@ class AdminLiturgyMixin:
             await message.reply("Erro ao listar inativos.")
 
     async def _on_activated(self, client, message):
-        """List active subscriptions."""
+        """List active subscriptions (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             chat_ids = await self.db.get_active_subscriptions()
             count = len(chat_ids)
@@ -169,7 +279,11 @@ class AdminLiturgyMixin:
             await message.reply("Erro ao listar ativos.")
 
     async def _on_userinfoliturgy(self, client, message):
-        """Send user info for all active subscriptions."""
+        """Send user info for all active subscriptions (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             active_ids = await self.db.get_active_subscriptions()
             if not active_ids:
@@ -186,7 +300,11 @@ class AdminLiturgyMixin:
             await message.reply("Erro ao listar usuários.")
 
     async def _on_userliturgydeactivated(self, client, message):
-        """Send deactivated subscription keys."""
+        """Send deactivated subscription keys (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
         try:
             deactivated_ids = await self.db.get_deactivated_subscriptions()
             if not deactivated_ids:
