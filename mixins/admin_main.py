@@ -179,18 +179,28 @@ class AdminMainMixin:
                 await message.reply("Backup já foi feito hoje.")
                 return
 
+            # Get Redis backup path from .env
             redis_path = os.getenv("PATH_REDIS", "/var/lib/redis/dump.rdb")
+            logger.info(f"Backup path from .env: {redis_path}")
+
             if not os.path.exists(redis_path):
-                await message.reply(f"Arquivo de backup não encontrado em {redis_path}")
+                logger.error(f"Backup file not found at: {redis_path}")
+                await message.reply(f"❌ Arquivo de backup não encontrado em `{redis_path}`")
                 return
 
+            # Get file size
+            file_size = os.path.getsize(redis_path)
+            file_size_mb = file_size / (1024 * 1024)
+
+            # Send backup file
             await message.reply_document(
                 document=redis_path,
-                caption=f"Backup Redis — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                caption=f"Backup Redis\n📦 Tamanho: {file_size_mb:.2f} MB\n⏰ {DateHandler.get_datetime_now().strftime('%Y-%m-%d %H:%M:%S')}"
             )
+            logger.info(f"Backup sent: {redis_path} ({file_size_mb:.2f} MB)")
         except Exception as e:
-            logger.error(f"Error in _on_backup: {e}")
-            await message.reply("Erro ao fazer backup.")
+            logger.error(f"Error in _on_backup: {e}", exc_info=True)
+            await message.reply("❌ Erro ao fazer backup.")
 
     async def _on_deactivatedurl(self, client, message):
         """List deactivated feeds (admin only)."""
