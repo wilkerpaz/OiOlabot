@@ -154,7 +154,7 @@ class FeedJob:
                 if summary:
                     text += f"{summary}\n"
             if link:
-                text += f'<a href="{link}">Leia mais</a>'
+                text += link
 
             return text.strip()
         except Exception as e:
