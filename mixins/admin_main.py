@@ -64,11 +64,16 @@ class AdminMainMixin:
         """Send admin commands list."""
         admin_text = (
             "**Comandos de Admin**\n\n"
-            "/owner — Define você como proprietário\n"
-            "/backup — Faz backup do banco de dados\n"
+            "**Configuração do Grupo:**\n"
+            "/owner — Define você como proprietário do grupo\n\n"
+            "**Gerenciamento de Feeds:**\n"
             "/allurl — Lista todos os feeds com metadata\n"
             "/deactivatedurl — Lista feeds desativados\n"
-            "/activateallurl — Ativa todos os feeds\n"
+            "/activateallurl — Ativa todos os feeds\n\n"
+            "**Banco de Dados:**\n"
+            "/backup — Faz backup do banco de dados\n"
+            "/getkey <padrão> — Busca chaves no Redis\n"
+            "/removekey <chave> — Remove chave do Redis\n"
         )
         await message.reply(admin_text)
 

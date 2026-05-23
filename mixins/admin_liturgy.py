@@ -46,13 +46,16 @@ class AdminLiturgyMixin:
         """Send admin commands list."""
         admin_text = (
             "**Comandos de Admin (Liturgia)**\n\n"
+            "**Envio Manual:**\n"
             "/senddailyliturgy — Envia liturgia do dia para todos\n"
-            "/sendaudioliturgy — Envia áudio da homilia para todos\n"
+            "/sendaudioliturgy — Envia áudio da homilia para todos\n\n"
+            "**Gerenciamento de Assinaturas:**\n"
             "/activateallliturgy — Ativa todas as assinaturas\n"
-            "/deactivated — Lista usuários desativados\n"
-            "/activated — Lista usuários ativados\n"
-            "/userinfoliturgy — Detalhes de cada assinatura\n"
-            "/userliturgydeactivated — Lista chaves desativadas\n"
+            "/activated — Lista usuários com assinatura ativa\n"
+            "/deactivated — Lista usuários com assinatura desativada\n\n"
+            "**Informações:**\n"
+            "/userinfoliturgy — Detalhes de cada assinatura ativa\n"
+            "/userliturgydeactivated — Lista de assinaturas desativadas\n"
         )
         await message.reply(admin_text)
 
