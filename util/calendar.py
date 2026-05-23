@@ -11,7 +11,7 @@ import locale
 
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+locale.setlocale(locale.LC_ALL, 'C.UTF-8')
 
 
 def create_callback_data(action, year, month, day):
