@@ -66,7 +66,7 @@ class AdminMainMixin:
             await self.db.set_group_config(chat_id, config)
             await message.reply(f"✅ {message.from_user.mention} é agora o proprietário deste grupo.")
         except Exception as e:
-            logger.error(f"Error in _on_owner: {e}")
+            logger.error(f"Error in _on_owner: {e}", exc_info=True)
             await message.reply("Erro ao definir proprietário.")
 
     async def _check_admin(self, user_id: int) -> bool:
@@ -121,7 +121,7 @@ class AdminMainMixin:
         except ValueError:
             await message.reply("❌ ID inválido. Use um número.")
         except Exception as e:
-            logger.error(f"Error in _on_addadmin: {e}")
+            logger.error(f"Error in _on_addadmin: {e}", exc_info=True)
             await message.reply("❌ Erro ao adicionar administrador.")
 
     async def _on_removeadmin(self, client, message):
@@ -145,7 +145,7 @@ class AdminMainMixin:
         except ValueError:
             await message.reply("❌ ID inválido. Use um número.")
         except Exception as e:
-            logger.error(f"Error in _on_removeadmin: {e}")
+            logger.error(f"Error in _on_removeadmin: {e}", exc_info=True)
             await message.reply("❌ Erro ao remover administrador.")
 
     async def _on_listadmin(self, client, message):
@@ -166,7 +166,7 @@ class AdminMainMixin:
 
             await message.reply(text)
         except Exception as e:
-            logger.error(f"Error in _on_listadmin: {e}")
+            logger.error(f"Error in _on_listadmin: {e}", exc_info=True)
             await message.reply("❌ Erro ao listar administradores.")
 
     async def _on_backup(self, client, message):
@@ -222,7 +222,7 @@ class AdminMainMixin:
 
             await message.reply(text)
         except Exception as e:
-            logger.error(f"Error in _on_deactivatedurl: {e}")
+            logger.error(f"Error in _on_deactivatedurl: {e}", exc_info=True)
             await message.reply("Erro ao listar feeds desativados.")
 
     async def _on_activateallurl(self, client, message):
@@ -238,7 +238,7 @@ class AdminMainMixin:
             else:
                 await message.reply("Nenhum feed para ativar.")
         except Exception as e:
-            logger.error(f"Error in _on_activateallurl: {e}")
+            logger.error(f"Error in _on_activateallurl: {e}", exc_info=True)
             await message.reply("Erro ao ativar feeds.")
 
     async def _on_allurl(self, client, message):
@@ -281,7 +281,7 @@ class AdminMainMixin:
                 await message.reply(msg)
 
         except Exception as e:
-            logger.error(f"Error in _on_allurl: {e}")
+            logger.error(f"Error in _on_allurl: {e}", exc_info=True)
             await message.reply("Erro ao listar feeds.")
 
     async def _on_deactivated(self, client, message):
@@ -295,7 +295,7 @@ class AdminMainMixin:
             count = len(urls)
             await message.reply(f"Existem {count} feed(s) inativo(s) no momento.")
         except Exception as e:
-            logger.error(f"Error in _on_deactivated: {e}")
+            logger.error(f"Error in _on_deactivated: {e}", exc_info=True)
             await message.reply("Erro ao listar inativos.")
 
     async def _on_activated(self, client, message):
@@ -309,7 +309,7 @@ class AdminMainMixin:
             count = len(urls)
             await message.reply(f"Existem {count} feed(s) ativo(s) no momento.")
         except Exception as e:
-            logger.error(f"Error in _on_activated: {e}")
+            logger.error(f"Error in _on_activated: {e}", exc_info=True)
             await message.reply("Erro ao listar ativos.")
 
     async def _on_userinfo(self, client, message):
@@ -337,5 +337,5 @@ class AdminMainMixin:
 
             await message.reply(text)
         except Exception as e:
-            logger.error(f"Error in _on_userinfo: {e}")
+            logger.error(f"Error in _on_userinfo: {e}", exc_info=True)
             await message.reply("Erro ao listar chats.")
