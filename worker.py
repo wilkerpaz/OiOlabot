@@ -32,8 +32,7 @@ async def main():
     # Feed job for main bot (RSS distribution)
     main_feed_job = FeedJob(
         MainDatabase(int(config("DB", default="0"))),
-        config("DEV_TOKEN"),
-        config("GROUP_LINK", default=None)
+        config("DEV_TOKEN")
     )
 
     scheduler.add_job(
