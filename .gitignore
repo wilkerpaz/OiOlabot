@@ -2,6 +2,7 @@
 *config.ini
 *.session*
 *service.sh
+venvPyrogram/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
