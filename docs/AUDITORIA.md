@@ -4,6 +4,15 @@
 > Escopo: todos os arquivos `.py` do projeto
 > Contexto: auditoria pré-evolução — identificar bugs, inconsistências e riscos antes de qualquer refatoração
 
+> **⚠️ Status (atualizado 2026-09-13): documento histórico, não é um plano de ação pendente.**
+> Esta auditoria cobre exclusivamente o código **v1** (`bot.py`, `ltd_bot.py`, `feed_bot.py`,
+> `feed_ltd_bot.py` e os módulos `util/` que só eles usam) — escrita antes do v2 existir. O v1
+> nunca foi corrigido: em vez disso, foi **substituído pelo v2** (`main.py`, `liturgy.py`,
+> `worker.py` + `factories/`, `bots/`, `mixins/`, `worker/`), que roda em produção hoje. Os
+> arquivos aqui auditados foram movidos para `legacy/` e não rodam em lugar nenhum. Os bugs
+> descritos abaixo foram verificados e continuam presentes no código arquivado — mantidos aqui
+> como registro histórico de por que o v1 foi abandonado, não como lista de correções a fazer.
+
 ---
 
 ## Visão Geral da Arquitetura
