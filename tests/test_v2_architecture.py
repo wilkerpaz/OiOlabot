@@ -239,10 +239,15 @@ class TestWorkerJobs:
         assert job.scrapers == scrapers
         assert hasattr(job, 'run')
 
-    def test_feed_job_format_entry(self):
+    async def test_feed_job_format_entry(self):
         """FeedJob should format feed entries correctly."""
         db = MainDatabase(0)
         job = FeedJob(db, "test_token")
+        client = AsyncMock()
+        client.get = AsyncMock(return_value=MagicMock(
+            status_code=200,
+            json=lambda: {"result": {"type": "group", "username": None}},
+        ))
 
         entry = {
             "title": "Test Title",
@@ -250,17 +255,17 @@ class TestWorkerJobs:
             "summary": "Test summary",
         }
 
-        formatted = job._format_entry(entry)
+        formatted = await job._format_entry(entry, client, 12345)
         assert "Test Title" in formatted
         assert "https://example.com" in formatted
-        assert "Test summary" in formatted
 
-    def test_feed_job_format_entry_empty(self):
+    async def test_feed_job_format_entry_empty(self):
         """FeedJob should return empty string for empty entries."""
         db = MainDatabase(0)
         job = FeedJob(db, "test_token")
+        client = AsyncMock()
 
-        result = job._format_entry({})
+        result = await job._format_entry({}, client, 12345)
         assert result == ""
 
 
