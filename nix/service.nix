@@ -57,4 +57,25 @@
       };
     };
   };
+
+  systemd.timers.oiolabot-watchdog = {
+    description = "OiOlabot - Watchdog timer (checks services every 15min)";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2min";
+      OnUnitActiveSec = "15min";
+    };
+  };
+
+  systemd.services.oiolabot-watchdog = {
+    description = "OiOlabot - Watchdog (restarts down services, alerts via Telegram)";
+    serviceConfig = {
+      Type = "oneshot";
+      User = "oiolabot";
+      Group = "oiolabot";
+      WorkingDirectory = "/opt/oiolabot";
+      EnvironmentFile = "/opt/oiolabot/.env";
+      ExecStart = "${pkgs.python311}/bin/python watchdog.py";
+    };
+  };
 }
