@@ -53,6 +53,7 @@
         ExecStart = "${pkgs.python311}/bin/python worker.py";
         Restart = "on-failure";
         RestartSec = 10;
+        TimeoutStopSec = 60;
       };
     };
   };

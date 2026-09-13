@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import signal
 from decouple import config
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -34,9 +35,14 @@ async def main():
         MainDatabase(int(config("DB", default="0"))),
         config("DEV_TOKEN")
     )
+    feed_job_lock = asyncio.Lock()
+
+    async def run_feed_job() -> None:
+        async with feed_job_lock:
+            await main_feed_job.run()
 
     scheduler.add_job(
-        main_feed_job.run,
+        run_feed_job,
         CronTrigger(minute="*/5"),  # Every 5 minutes
         id="feed_job_main",
         name="Feed distribution (main)",
@@ -53,9 +59,14 @@ async def main():
         config("DEV_TOKEN_LD"),
         scrapers,
     )
+    liturgy_job_lock = asyncio.Lock()
+
+    async def run_liturgy_job() -> None:
+        async with liturgy_job_lock:
+            await liturgy_job.run()
 
     scheduler.add_job(
-        liturgy_job.run,
+        run_liturgy_job,
         CronTrigger(hour=7, minute=0, timezone=config("TZ", default="America/Belem")),
         id="daily_liturgy",
         name="Daily liturgy delivery",
@@ -64,12 +75,29 @@ async def main():
     scheduler.start()
     logger.info("Scheduler started with 2 jobs: FeedJob (5min) + LiturgyJob (7am)")
 
-    try:
-        await asyncio.Event().wait()
-    except KeyboardInterrupt:
+    stop_event = asyncio.Event()
+
+    def _handle_shutdown_signal() -> None:
         logger.info("Shutdown signal received")
-        scheduler.shutdown()
-        logger.info("Worker stopped")
+        stop_event.set()
+
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        loop.add_signal_handler(sig, _handle_shutdown_signal)
+
+    await stop_event.wait()
+
+    logger.info("Waiting for in-flight jobs to finish before exiting...")
+    # AsyncIOScheduler's executor does not honor shutdown(wait=True) — it
+    # cancels running jobs outright. Acquiring each job's lock blocks until
+    # any in-flight run (and its Redis metadata write) has actually
+    # completed before we shut the scheduler down.
+    async with feed_job_lock:
+        pass
+    async with liturgy_job_lock:
+        pass
+    scheduler.shutdown(wait=False)
+    logger.info("Worker stopped")
 
 
 if __name__ == "__main__":
