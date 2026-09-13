@@ -11,7 +11,9 @@ mixins/             Shared handlers: /welcome, /addurl, /hoje, /lock, etc.
 util/database/      Redis async operations for MainDatabase (DB 0) and LiturgyDatabase (DB 1)
 util/scrapers/      Content fetchers (LiturgiaScraper, HomiliaScraper, SantoScraper)
 worker/             Background jobs (FeedJob every 5min, LiturgyJob at 7am)
-main.py, liturgy.py, worker.py    Entry points for 3 systemd services
+legacy/             v1 (Pyrogram-original) — archived, does not run in production
+tests/              pytest suite
+main.py, liturgy.py, worker.py, watchdog.py    Entry points for 4 systemd --user services
 ```
 
 ## Adding a Handler
@@ -158,9 +160,9 @@ parsed = await asyncio.to_thread(feedparser.parse, url)
 ## Debugging
 
 ```bash
-# Live logs
-journalctl -u oiolabot-main -f
-journalctl -u oiolabot-worker -f
+# Live logs (services run as systemd --user units, not system-wide)
+journalctl --user -u oiolabot-main -f
+journalctl --user -u oiolabot-worker -f
 
 # Check bot is running
 ps aux | grep "python main.py"
@@ -188,7 +190,7 @@ print(asyncio.run(s.safe_fetch()))
 |-------|-------|-----|
 | `Cannot use `await` outside async function` | Missing `async def` | Add `async` to function signature |
 | `No module named 'kurigram'` | Kurigram not installed | `pip install kurigram` |
-| `Redis connection refused` | Redis not running | `systemctl start redis` |
+| `Redis connection refused` | Redis not running | `systemctl --user start redis-server` |
 | `AttributeError: 'Client' has no attribute 'on_start'` | Using old Pyrogram | Use `kurigram` instead |
 | `Event loop is closed` | Async cleanup issue | Add `async with` context managers |
 
@@ -207,11 +209,11 @@ API_ID=999 python main.py
 
 ## Git Workflow
 
-```bash
-# Always work on v2 branch
-git checkout v2
+There is no separate `v2` branch — the v2 architecture lives directly on `master`.
 
-# Create feature branch
+```bash
+# Create feature branch off master
+git checkout master
 git checkout -b feature/my-feature
 
 # Make changes, test
@@ -247,6 +249,7 @@ git push origin feature/my-feature
 | `util/database/base.py` | Redis utility methods (`_find`, `exists`, `close`) |
 | `util/scrapers/base.py` | Error handling template (`safe_fetch`) |
 | `worker/*.py` | Background job implementations |
+| `watchdog.py` | Standalone script (systemd --user timer, 15min): restarts down services, alerts via Telegram |
 | `CLAUDE.md` | Project guidelines and conventions |
 | `docs/V2_SPEC.md` | Detailed architecture specification |
 
@@ -255,5 +258,4 @@ git push origin feature/my-feature
 1. Read `docs/V2_SPEC.md` for full architecture
 2. Read `docs/DEPLOYMENT_GUIDE.md` for deployment instructions
 3. Run `pytest tests/` to verify environment
-4. Pick a feature from `docs/AUDITORIA.md` and implement it
-5. Check memory at `.claude/projects/...../memory/` for context
+4. `docs/AUDITORIA.md` is a historical record of v1 bugs (v1 is archived in `legacy/`, not a source of pending v2 work)

@@ -19,7 +19,7 @@ Dois bots Telegram especializados em automação para comunidades católicas bra
 - `/quiet`, `/unquiet` — Ativar/desativar despedidas automáticas
 - `/addurl`, `/listurl`, `/removeurl` — Gerenciar feeds RSS
 - `/start`, `/stop` — Ativar/desativar bot
-- `/chatinfo` — Informações do grupo
+- `/me` — Informações do chat
 
 **Admin (secretos):**
 - `/owner` — Designar proprietário do grupo

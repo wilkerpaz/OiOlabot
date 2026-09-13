@@ -110,7 +110,7 @@ async def on_shutdown(client: Client) -> None:
     scheduler.shutdown()
 ```
 
-> **Relevância para o v2:** `LiturgyBot` usa isso para iniciar/parar o APScheduler sem depender de `bot.loop`.
+> **Relevância para o v2:** `BaseBot._register_lifecycle()` (`bots/base.py`) usa isso para logar start/stop e fechar a conexão Redis (`await self.db.close()`) no `on_stop`. O APScheduler **não** roda dentro de `MainBot`/`LiturgyBot` — ele vive no processo separado `worker.py`, iniciado direto em `main()` via `scheduler.start()`, sem depender de nenhum lifecycle hook do Client.
 
 ---
 
@@ -189,6 +189,8 @@ meu_filtro = create(meu_filtro_func, name="MeuFiltro")
 @bot.on_message(meu_filtro)
 async def handler(client, message): ...
 ```
+
+> **Nota:** o exemplo acima usa uma lista estática `ADMIN_IDS` de forma didática. **O projeto não tem admins hardcoded** — `mixins/admin_main.py`/`admin_liturgy.py` checam via `await self.db.is_admin(user_id)` (lista dinâmica no Redis, gerenciada pelos comandos `/addadmin`, `/removeadmin`, `/listadmin`), sem usar `filters.create` para isso — a checagem é feita dentro do próprio handler (`_check_admin`), não como filtro do Kurigram.
 
 ---
 
@@ -348,7 +350,7 @@ class WelcomeMixin:
     async def set_welcome(self, client, message):
         ...
 
-    def register_welcome_handlers(self):
+    def _register_welcome_handlers(self):
         self.client.add_handler(
             MessageHandler(self._welcome, filters.new_chat_members)
         )
@@ -356,6 +358,8 @@ class WelcomeMixin:
             MessageHandler(self.set_welcome, filters.command("welcome") & filters.group)
         )
 ```
+
+Convenção real do projeto: método de registro sempre com underscore (`_register_<nome>_handlers`), chamado a partir de `register_handlers()` (sem underscore, o único método abstrato exigido por `BaseBot`) na classe do bot (`bots/main_bot.py`, `bots/liturgy_bot.py`).
 
 ---
 
@@ -367,6 +371,8 @@ class WelcomeMixin:
 | `client.loop` property | `asyncio.get_event_loop()` |
 | `parse_mode=` em alguns métodos | `enums.ParseMode.HTML` / `MARKDOWN` |
 | `pyTelegramBotAPI` (sync) | Kurigram cobre tudo de forma async |
+
+> **Exceção real no projeto:** `worker/feed_job.py` (`FeedJob`) não usa nem Kurigram nem `pyTelegramBotAPI` para enviar as mensagens de feed — ele chama a Bot API do Telegram direto via `httpx.AsyncClient` (`POST https://api.telegram.org/bot<token>/sendMessage`). É uma escolha deliberada do worker (processo sem Client MTProto próprio, só HTTP), não um handler de bot — não confundir com os handlers de `MainBot`/`LiturgyBot`, que usam Kurigram normalmente.
 
 ---
 

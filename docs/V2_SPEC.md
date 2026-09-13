@@ -2,7 +2,16 @@
 
 > Criado em: 2026-05-23
 > Status: Aprovado para implementação
-> Contexto: Ver `ESTADO_DO_PROJETO.md` e `AUDITORIA.md` para diagnóstico completo do v1
+> Contexto: Ver `AUDITORIA.md` para diagnóstico completo do v1 (`ESTADO_DO_PROJETO.md` citado abaixo nunca existiu/não existe mais)
+
+> **⚠️ Status (atualizado 2026-09-13): documento de design histórico — a implementação real divergiu do plano em vários pontos importantes.** Não existe branch `v2` (tudo foi implementado direto na `master`; v1 foi arquivado em `legacy/`, não "estabilizado"). Principais divergências entre este plano e o código real:
+> - **`main.py` e `liturgy.py` são entry points separados**, não um único `main.py` subindo os dois bots via `asyncio.gather` como planejado na §8.
+> - Um **4º processo, `watchdog.py`**, foi adicionado depois (não previsto aqui): verifica os outros 3 serviços a cada 15min via `systemctl --user`, reinicia e alerta via Telegram.
+> - Deploy real é **home-manager + `systemctl --user`** (`nix/home.nix`), não o módulo NixOS system-wide de `nix/service.nix` (§9) — esse arquivo existe só como referência alternativa não usada.
+> - `MainBot`/`LiturgyBot` também incluem `AdminMainMixin`/`AdminLiturgyMixin` (não listados na composição da §5).
+> - **O plano da §7 de um `FeedJob` parametrizado servindo os dois bancos nunca foi concluído**: `worker.py` só instancia `FeedJob` para `MainDatabase`. `LiturgyDatabase` nunca ganhou os métodos de assinatura de URL (`add_url_subscription`, `get_chat_urls`, `remove_url_for_chat`) que `FeedMixin` (usado por `LiturgyBot`) chama — na prática, `/addurl`, `/listurl`, `/removeurl` no bot de liturgia lançam `AttributeError` hoje. Bug real, não só de documentação.
+> - Variáveis citadas na §10 como "usadas no v2" (`REDIS`, `THREADS`, `CHANNEL_LD`, `FEED_INTERVAL`) **não são lidas em nenhum lugar do v2** — são resquício do v1 ou nunca foram implementadas; o `ADMIN_CHAT_ID` (watchdog) não existia quando este documento foi escrito.
+> - Admins são geridos via Redis (`/addadmin`, `/removeadmin`, `/listadmin`), não aparecem na §5/§6 como estão hoje.
 
 ---
 

@@ -28,15 +28,18 @@ O v2 é totalmente async (Kurigram + APScheduler). A camada Redis precisa acompa
 
 ```python
 from redis.asyncio import Redis
+from decouple import config
 
 redis_client = Redis(
-    host="localhost",
-    port=6379,
-    password=password or None,
+    host=config("REDIS_HOST", default="localhost"),
+    port=int(config("REDIS_PORT", default=6379)),
+    password=password,
     decode_responses=True,
     db=db
 )
 ```
+
+Padrão real de resolução de senha em `BaseDatabase.__init__` (`util/database/base.py`): tenta `REDIS_PASSWORD` (formato v2) e cai para `REDIS` (formato v1/legado) se não existir.
 
 O client já gerencia um pool de conexões internamente. Para uma aplicação de longa duração (como este bot), o padrão correto é:
 
@@ -94,7 +97,12 @@ async for field in r.hscan_iter("minha_chave"):
 
 ---
 
-## 4. Comandos usados neste projeto — versão async
+## 4. Comandos redis-py — versão async
+
+> Nota: nem todos os comandos abaixo estão de fato em uso hoje no código. `hset`, `hget`, `hgetall`,
+> `exists`, `delete`, `lrange`, `rpush`, `scan_iter` e `save` são usados em `util/database/`. Já
+> `hmget`, `hexists` e `rename` são mostrados como referência da API do redis-py, mas não aparecem
+> em nenhuma chamada real no projeto atualmente.
 
 ### Hash (estrutura mais usada)
 
@@ -149,9 +157,9 @@ await r.rename("chave_antiga", "chave_nova")
 ### Save (backup)
 
 ```python
-# Força escrita do dump.rdb
+# Força escrita do dump.rdb — usado em MainDatabase.backup() (util/database/main_db.py)
 await r.save()
-# ou BGSAVE para não bloquear
+# ou BGSAVE para não bloquear (não usado atualmente neste projeto, save() bloqueante é o que é chamado)
 await r.bgsave()
 ```
 
@@ -168,7 +176,7 @@ async with r.pipeline() as pipe:
     await pipe.execute()
 ```
 
-**Uso atual em `activated_all_urls`:** faz `set_name_key` em loop — no v2 substituir por pipeline.
+**Já implementado:** `MainDatabase.activate_all_urls()` (`util/database/main_db.py`) usa exatamente esse padrão de pipeline hoje.
 
 ---
 
