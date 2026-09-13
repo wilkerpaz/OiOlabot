@@ -24,8 +24,11 @@ Dois bots Telegram especializados em automação para comunidades católicas bra
 **Admin (secretos):**
 - `/owner` — Designar proprietário do grupo
 - `/admin` — Listar comandos de admin
-- `/backup` — Exportar configuração do grupo
+- `/addadmin`, `/removeadmin`, `/listadmin` — Gerenciar administradores
+- `/backup` — Exportar backup do Redis (arquivo `.rdb`)
 - `/deactivatedurl`, `/activateallurl`, `/allurl` — Gerenciar feeds globalmente
+- `/activated`, `/deactivated` — Contagem de feeds ativos/inativos
+- `/userinfo` — Chats com feeds ativos
 
 ### LiturgyBot (DB 1 — Liturgia Diária)
 
@@ -40,6 +43,7 @@ Dois bots Telegram especializados em automação para comunidades católicas bra
 
 **Admin (secretos):**
 - `/admin` — Listar comandos de admin
+- `/addadmin`, `/removeadmin`, `/listadmin` — Gerenciar administradores
 - `/senddailyliturgy` — Enviar liturgia para todos manualmente
 - `/sendaudioliturgy` — Enviar áudio da homilia para todos
 - `/activateallliturgy` — Ativar todas as assinaturas
@@ -51,13 +55,14 @@ Dois bots Telegram especializados em automação para comunidades católicas bra
 
 ## 📦 Arquitetura (v2)
 
-**3 processos independentes:**
+**4 processos independentes:**
 
 | Processo | Entrada | Função | Cron |
 |----------|---------|--------|------|
 | **MainBot** | `main.py` | Handlers de grupo + RSS | - |
 | **LiturgyBot** | `liturgy.py` | Handlers de liturgia | - |
 | **Worker** | `worker.py` | Distribuição de feeds + liturgia diária | 5min + 7am |
+| **Watchdog** | `watchdog.py` | Verifica e reinicia serviços caídos, avisa via Telegram | 15min |
 
 **Banco de dados:**
 - **Redis DB 0:** MainBot + FeedJob (grupos, URLs, metadados)
@@ -86,8 +91,8 @@ git clone https://github.com/wilkerpaz/OiOlabot.git
 cd OiOlabot
 
 # Criar ambiente virtual
-python -m venv venv
-source venv/bin/activate  # ou venv\Scripts\activate no Windows
+python -m venv .venv
+source .venv/bin/activate  # ou .venv\Scripts\activate no Windows
 
 # Instalar dependências
 pip install -r requirements.txt
@@ -98,6 +103,8 @@ cp .env.example .env
 ```
 
 ### Variáveis de Ambiente (`.env`)
+
+Veja `.env.example` para a lista completa e atualizada. Principais:
 
 ```bash
 # Telegram API
@@ -111,6 +118,12 @@ DEV_TOKEN_LD=<token_bot_liturgia>
 # Redis
 DB=0                    # MainBot database
 DB_LD=1                 # LiturgyBot database
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=         # Deixe vazio se não houver senha
+
+# Watchdog
+ADMIN_CHAT_ID=<seu_chat_id>  # Recebe alertas quando um serviço cai
 
 # Configuração
 TZ=America/Belem        # Fuso horário
@@ -132,24 +145,32 @@ python liturgy.py
 
 # Terminal 3 — Worker (jobs de background)
 python worker.py
+
+# watchdog.py roda como verificação pontual (systemd timer em produção),
+# não precisa ficar rodando em terminal separado no dia a dia
+python watchdog.py
 ```
 
-### Produção (NixOS + systemd)
+### Produção (NixOS + home-manager, `systemctl --user`)
+
+Os serviços rodam como unidades systemd **de usuário** (via home-manager), não system-wide — sempre com `--user`:
 
 ```bash
 # Status
-systemctl status oiolabot-main oiolabot-liturgy oiolabot-worker
+systemctl --user status oiolabot-main oiolabot-liturgy oiolabot-worker oiolabot-watchdog
 
 # Logs
-journalctl -u oiolabot-main -f
-journalctl -u oiolabot-liturgy -f
-journalctl -u oiolabot-worker -f
+journalctl --user -u oiolabot-main -f
+journalctl --user -u oiolabot-liturgy -f
+journalctl --user -u oiolabot-worker -f
 
 # Reiniciar
-systemctl restart oiolabot-{main,liturgy,worker}
+systemctl --user restart oiolabot-main oiolabot-liturgy oiolabot-worker
 ```
 
-Ver `docs/DEPLOYMENT_GUIDE.md` para deploy em produção.
+O `oiolabot-watchdog` roda via `systemd.user.timers` a cada 15min — não precisa (nem deve) ser reiniciado manualmente como serviço contínuo.
+
+A definição real desses serviços fica em `nix/home.nix` (config de referência; o arquivo aplicado de fato no servidor vive em `~/.config/home-manager/home.nix` e é ativado com `home-manager switch`). `nix/service.nix` é uma referência alternativa para deploy via módulo NixOS system-wide, não é o método usado atualmente. Ver `docs/DEPLOYMENT_GUIDE.md` para mais detalhes.
 
 ---
 
@@ -193,15 +214,26 @@ worker/
 ├── feed_job.py         # Distribuição de feeds (5min)
 └── liturgy_job.py      # Envio de liturgia (7am)
 
+legacy/                 # v1 (Pyrogram original) — arquivado, não roda em produção
+├── bot.py, ltd_bot.py, feed_bot.py, feed_ltd_bot.py, login.py
+└── util/               # database.py, homiliadodia.py, liturgiadiaria.py, santododia.py
+
+tests/                  # Suíte de testes (pytest)
+
+nix/                    # Configuração NixOS/home-manager
+├── home.nix            # Espelho de referência dos serviços systemd --user reais
+├── service.nix         # Referência alternativa (módulo NixOS system-wide, não usado hoje)
+└── default.nix
+
 docs/                   # Documentação
-├── CLAUDE.md           # Contexto para Claude Code
 ├── KURIGRAM_KB.md      # API Kurigram
 ├── REDIS_SCHEMA.md     # Schema Redis
 ├── DEPLOYMENT_GUIDE.md # Como fazer deploy
 └── V2_SPEC.md          # Especificação completa
 
-main.py, liturgy.py, worker.py  # Entry points
-requirements.txt                 # Dependências
+CLAUDE.md                                       # Contexto para Claude Code (raiz do projeto)
+main.py, liturgy.py, worker.py, watchdog.py     # Entry points
+requirements.txt                                # Dependências
 ```
 
 ---
@@ -220,8 +252,8 @@ requirements.txt                 # Dependências
 - ✅ **Retry automático** — Erros transitórios são logados e retentados no próximo ciclo
 
 ### Comandos
-- ✅ **21 comandos implementados** — Paridade com v1 + melhorias
-- ✅ **Admin handlers secretos** — 6 MainBot + 8 LiturgyBot
+- ✅ **Paridade com v1 + melhorias**
+- ✅ **Admin handlers secretos** — 12 MainBot + 11 LiturgyBot
 - ✅ **Resposta inteligente** — `/help` não lista comandos secretos
 
 ---
@@ -272,4 +304,4 @@ Para dúvidas, bugs ou sugestões: abra uma issue no GitHub ou contate o desenvo
 
 ---
 
-**Última atualização:** Maio 2026 | **Versão:** 2.0 (PRODUÇÃO-READY)
+**Última atualização:** Setembro 2026 | **Versão:** 2.0 (PRODUÇÃO-READY)
