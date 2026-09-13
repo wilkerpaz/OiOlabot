@@ -1,9 +1,9 @@
 [pyrogram]
-api_id=320029
-api_hash=d08gf3dbcc36aXX8e72d6f60c2ae99b0
+api_id=your_api_id_here
+api_hash=your_api_hash_here
 lang_code=pt-br
-my_bot=Namebot
-bot_token=7834935494:AbGoHjaFn-we-tAjoq_T8UChE8pamCLEV0g
+my_bot=YourBotName
+bot_token=your_bot_token_here
 
 [user]
-phone_number=5511999993192
+phone_number=+5511999999999
