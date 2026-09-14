@@ -171,9 +171,9 @@ class AdminLiturgyMixin:
             today = DateHandler.date(now)
 
             scraper = LiturgiaScraper(today)
-            text = await scraper.fetch()
+            sections = await scraper.fetch_sections()
 
-            if not text:
+            if not sections:
                 await message.reply("Erro ao buscar liturgia do dia.")
                 return
 
@@ -186,9 +186,13 @@ class AdminLiturgyMixin:
                 sent_count = 0
                 for chat_id in chat_ids:
                     try:
-                        await self._send_message(http_client, chat_id, text)
-                        await self.db.set_last_send(chat_id)
-                        sent_count += 1
+                        chat_sent = 0
+                        for section in sections:
+                            if await self._send_message(http_client, chat_id, section):
+                                chat_sent += 1
+                        if chat_sent > 0:
+                            await self.db.set_last_send(chat_id)
+                            sent_count += 1
                     except Exception as e:
                         logger.error(f"Error sending to {chat_id}: {e}")
 
