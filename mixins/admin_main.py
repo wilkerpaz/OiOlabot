@@ -53,6 +53,12 @@ class AdminMainMixin:
         self.client.add_handler(
             MessageHandler(self._on_userinfo, filters.command("userinfo"))
         )
+        self.client.add_handler(
+            MessageHandler(self._on_getkey, filters.command("getkey"))
+        )
+        self.client.add_handler(
+            MessageHandler(self._on_removekey, filters.command("removekey"))
+        )
 
     async def _on_owner(self, client, message):
         """Set current user as group owner."""
@@ -256,7 +262,7 @@ class AdminMainMixin:
 
             text = "**Feeds Desativados:**\n\n"
             for url in urls:
-                text += f"`/removekey {url}`\n"
+                text += f"{url}\n`/getkey *^{url}^`\n\n"
 
             await message.reply(text)
         except Exception as e:
@@ -387,3 +393,64 @@ class AdminMainMixin:
         except Exception as e:
             logger.error(f"Error in _on_userinfo: {e}", exc_info=True)
             await message.reply("Erro ao listar chats.")
+
+    async def _on_getkey(self, client, message):
+        """Search Redis keys by pattern, suggesting /removekey for each (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
+        try:
+            args = message.text.split(None, 1)
+            if len(args) < 2:
+                await message.reply("❌ Uso: `/getkey <padrão>` (ex: `/getkey user_url:*`)")
+                return
+
+            pattern = args[1].strip()
+            keys = await self.db._find(pattern)
+            if not keys:
+                await message.reply(f"Nenhuma chave encontrada para: `{pattern}`")
+                return
+
+            messages = []
+            current_text = f"**Chaves encontradas ({len(keys)}):**\n\n"
+            max_length = 3500
+
+            for key in keys:
+                entry = f"`/removekey {key}`\n"
+                if len(current_text) + len(entry) > max_length:
+                    messages.append(current_text.strip())
+                    current_text = entry
+                else:
+                    current_text += entry
+
+            if current_text.strip():
+                messages.append(current_text.strip())
+
+            for msg in messages:
+                await message.reply(msg)
+        except Exception as e:
+            logger.error(f"Error in _on_getkey: {e}", exc_info=True)
+            await message.reply("❌ Erro ao buscar chaves.")
+
+    async def _on_removekey(self, client, message):
+        """Delete an exact Redis key (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
+        try:
+            args = message.text.split(None, 1)
+            if len(args) < 2:
+                await message.reply("❌ Uso: `/removekey <chave_exata>` (use `/getkey <padrão>` para encontrar a chave)")
+                return
+
+            key = args[1].strip()
+            deleted = await self.db.redis.delete(key)
+            if deleted:
+                await message.reply(f"✅ Chave removida: `{key}`")
+            else:
+                await message.reply(f"⚠️ Chave não encontrada: `{key}`")
+        except Exception as e:
+            logger.error(f"Error in _on_removekey: {e}", exc_info=True)
+            await message.reply("❌ Erro ao remover chave.")

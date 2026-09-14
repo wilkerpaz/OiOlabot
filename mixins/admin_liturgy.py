@@ -50,6 +50,12 @@ class AdminLiturgyMixin:
         self.client.add_handler(
             MessageHandler(self._on_userliturgydeactivated, filters.command("userliturgydeactivated"))
         )
+        self.client.add_handler(
+            MessageHandler(self._on_getkey, filters.command("getkey"))
+        )
+        self.client.add_handler(
+            MessageHandler(self._on_removekey, filters.command("removekey"))
+        )
 
     async def _check_admin(self, user_id: int) -> bool:
         """Check if user is an admin."""
@@ -73,6 +79,9 @@ class AdminLiturgyMixin:
             "**Informações:**\n"
             "/userinfoliturgy — Detalhes de cada assinatura ativa\n"
             "/userliturgydeactivated — Lista de assinaturas desativadas\n\n"
+            "**Banco de Dados:**\n"
+            "/getkey <padrão> — Busca chaves no Redis\n"
+            "/removekey <chave> — Remove chave do Redis\n\n"
             "**Gerenciamento de Admins:**\n"
             "/addadmin <id> — Adiciona um administrador\n"
             "/removeadmin <id> — Remove um administrador\n"
@@ -313,12 +322,73 @@ class AdminLiturgyMixin:
 
             text = "**Assinaturas Desativadas:**\n\n"
             for chat_id in deactivated_ids[:50]:
-                text += f"`/removekey liturgy:{chat_id}`\n"
+                text += f"Chat ID: `{chat_id}`\n`/getkey daily_liturgy:*chat_id:{chat_id}*`\n\n"
 
             await message.reply(text)
         except Exception as e:
             logger.error(f"Error in _on_userliturgydeactivated: {e}")
             await message.reply("Erro ao listar desativadas.")
+
+    async def _on_getkey(self, client, message):
+        """Search Redis keys by pattern, suggesting /removekey for each (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
+        try:
+            args = message.text.split(None, 1)
+            if len(args) < 2:
+                await message.reply("❌ Uso: `/getkey <padrão>` (ex: `/getkey daily_liturgy:*`)")
+                return
+
+            pattern = args[1].strip()
+            keys = await self.db._find(pattern)
+            if not keys:
+                await message.reply(f"Nenhuma chave encontrada para: `{pattern}`")
+                return
+
+            messages = []
+            current_text = f"**Chaves encontradas ({len(keys)}):**\n\n"
+            max_length = 3500
+
+            for key in keys:
+                entry = f"`/removekey {key}`\n"
+                if len(current_text) + len(entry) > max_length:
+                    messages.append(current_text.strip())
+                    current_text = entry
+                else:
+                    current_text += entry
+
+            if current_text.strip():
+                messages.append(current_text.strip())
+
+            for msg in messages:
+                await message.reply(msg)
+        except Exception as e:
+            logger.error(f"Error in _on_getkey: {e}", exc_info=True)
+            await message.reply("❌ Erro ao buscar chaves.")
+
+    async def _on_removekey(self, client, message):
+        """Delete an exact Redis key (admin only)."""
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
+        try:
+            args = message.text.split(None, 1)
+            if len(args) < 2:
+                await message.reply("❌ Uso: `/removekey <chave_exata>` (use `/getkey <padrão>` para encontrar a chave)")
+                return
+
+            key = args[1].strip()
+            deleted = await self.db.redis.delete(key)
+            if deleted:
+                await message.reply(f"✅ Chave removida: `{key}`")
+            else:
+                await message.reply(f"⚠️ Chave não encontrada: `{key}`")
+        except Exception as e:
+            logger.error(f"Error in _on_removekey: {e}", exc_info=True)
+            await message.reply("❌ Erro ao remover chave.")
 
     async def _send_message(self, client: httpx.AsyncClient, chat_id: int, text: str) -> bool:
         """Send a text message via Telegram Bot API. Return True if successful."""
