@@ -102,15 +102,18 @@ class LiturgyMixin:
             await self._send_liturgy(callback_query, selected_date.date())
 
     async def _send_liturgy(self, update, target_date):
-        """Helper to send liturgy for a specific date."""
+        """Helper to send liturgy for a specific date, one message per reading."""
         scraper = LiturgiaScraper(target_date)
-        text = await scraper.safe_fetch()
+        sections = await scraper.safe_fetch_sections()
 
         try:
             if hasattr(update, 'reply'):  # MessageHandler
-                await update.reply(text)
+                for section in sections:
+                    await update.reply(section)
             elif hasattr(update, 'edit_message_text'):  # CallbackQueryHandler
-                await update.edit_message_text(text)
+                await update.edit_message_text(sections[0])
+                for section in sections[1:]:
+                    await update.message.reply(section)
         except Exception as e:
             logger.error(f"Error sending liturgy: {e}")
 

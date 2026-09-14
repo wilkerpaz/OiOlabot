@@ -32,11 +32,12 @@ class LiturgyJob:
             today = DateHandler.date(now)
             today_str = str(today)
 
-            # Fetch today's liturgy
+            # Fetch today's liturgy, one message per reading (Sundays regularly
+            # exceed Telegram's 4096-char single-message limit otherwise)
             scraper = LiturgiaScraper(today)
-            text = await scraper.safe_fetch()
+            sections = await scraper.fetch_sections()
 
-            if not text:
+            if not sections:
                 logger.warning("No liturgy content fetched")
                 return
 
@@ -46,11 +47,11 @@ class LiturgyJob:
                 logger.debug("No active subscriptions")
                 return
 
-            # Send liturgy text to all subscribed chats with date/time validation
+            # Send liturgy sections to all subscribed chats with date/time validation
             async with httpx.AsyncClient(timeout=30) as client:
                 success_count = 0
                 for chat_id in chat_ids:
-                    if await self._send_to_chat(client, chat_id, text, now):
+                    if await self._send_to_chat(client, chat_id, sections, now):
                         success_count += 1
 
             logger.info(f"Sent daily liturgy to {success_count}/{len(chat_ids)} chat(s)")
@@ -63,9 +64,13 @@ class LiturgyJob:
             logger.error(f"LiturgyJob error: {e}", exc_info=True)
 
     async def _send_to_chat(
-        self, client: httpx.AsyncClient, chat_id: int, text: str, send_time
+        self, client: httpx.AsyncClient, chat_id: int, sections: list[str], send_time
     ) -> bool:
-        """Send liturgy text to a chat with date validation. Return True if successful."""
+        """Send liturgy sections to a chat with date validation.
+
+        Sends one message per reading (see LiturgiaScraper.fetch_sections).
+        Returns True if at least one section was sent successfully.
+        """
         try:
             # Get chat's last send date/time
             last_send_str = await self.db.get_last_send(chat_id)
@@ -81,30 +86,36 @@ class LiturgyJob:
                 logger.debug(f"Chat {chat_id}: already received today ({last_send}), skipping")
                 return False
 
-            payload = {
-                "chat_id": chat_id,
-                "text": text,
-                "parse_mode": "HTML",
-            }
+            sent_count = 0
+            for section in sections:
+                payload = {
+                    "chat_id": chat_id,
+                    "text": section,
+                    "parse_mode": "HTML",
+                }
 
-            response = await client.post(
-                f"{self.api_url}/sendMessage",
-                json=payload,
-            )
+                response = await client.post(
+                    f"{self.api_url}/sendMessage",
+                    json=payload,
+                )
 
-            strategy, error_details = ErrorHandler.classify_response(response)
+                strategy, error_details = ErrorHandler.classify_response(response)
 
-            if strategy == "success":
-                # Update last send time only on success
+                if strategy == "success":
+                    sent_count += 1
+                elif strategy == "permanent":
+                    ErrorHandler.log_error(chat_id, error_details, strategy)
+                    await self.db.deactivate_subscription(chat_id)
+                    break
+                else:
+                    ErrorHandler.log_error(chat_id, error_details, strategy)
+                    # Keep trying the remaining sections (best-effort)
+
+            if sent_count > 0:
+                # Update last send time if at least one section got through
                 await self.db.set_last_send(chat_id, str(send_time))
                 return True
-            elif strategy == "permanent":
-                ErrorHandler.log_error(chat_id, error_details, strategy)
-                await self.db.deactivate_subscription(chat_id)
-                return False
-            else:
-                ErrorHandler.log_error(chat_id, error_details, strategy)
-                return False
+            return False
 
         except Exception as e:
             logger.error(f"Error sending to {chat_id}: {e}")

@@ -37,7 +37,18 @@ class LiturgiaScraper(BaseScraper):
         return f"{day_name}, {dt.day} de {month_name} de {dt.year}"
 
     async def fetch(self) -> str | None:
-        """Fetch today's scripture reading."""
+        """Fetch today's scripture reading as a single joined string."""
+        sections = await self.fetch_sections()
+        return "\n\n".join(sections) if sections else None
+
+    async def fetch_sections(self) -> list[str] | None:
+        """Fetch today's scripture reading as a list of per-reading messages.
+
+        Each reading (Primeira Leitura, Salmo, Segunda Leitura, Evangelho —
+        weekdays have 3, Sundays/solemnities have 4) is its own entry, since
+        the joined text regularly exceeds Telegram's 4096-char message limit
+        on Sundays. Only the first entry carries the date/title header.
+        """
         try:
             async with self.make_client(timeout=10.0) as client:
                 # Step 1: Get the URL for this specific date
@@ -103,9 +114,9 @@ class LiturgiaScraper(BaseScraper):
                     logger.warning(f"Readings not found in {liturgy_url}")
                     return None
 
-                # Format readings
+                # Format each reading as its own message
                 result = []
-                for reading_div in readings_divs:
+                for i, reading_div in enumerate(readings_divs):
                     reading_text = reading_div.text.strip()
 
                     # Add spacing after first line
@@ -122,11 +133,14 @@ class LiturgiaScraper(BaseScraper):
                         "\n— Glória a vós, Senhor.\n\n",
                     )
 
-                    # Prepend date and title
-                    formatted = f"{self.formatted_date}\n{day_title}\n{reading_text}"
+                    # Only the first message carries the date/title header
+                    if i == 0:
+                        formatted = f"{self.formatted_date}\n{day_title}\n{reading_text}"
+                    else:
+                        formatted = reading_text
                     result.append(formatted)
 
-                return "\n\n".join(result) if result else None
+                return result if result else None
 
         except httpx.RequestError as e:
             logger.error(f"HTTP error fetching liturgy: {e}")
@@ -138,3 +152,12 @@ class LiturgiaScraper(BaseScraper):
     def _fallback(self) -> str:
         """Fallback message when liturgy scraping fails."""
         return "Não consegui recuperar a leitura do dia. Por favor, tente novamente."
+
+    async def safe_fetch_sections(self) -> list[str]:
+        """Safely fetch per-reading messages, falling back to a single error message."""
+        try:
+            sections = await self.fetch_sections()
+            return sections if sections else [self._fallback()]
+        except Exception as e:
+            logger.error(f"Error in {self.__class__.__name__}.fetch_sections(): {e}")
+            return [self._fallback()]
