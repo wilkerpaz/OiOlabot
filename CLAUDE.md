@@ -65,7 +65,7 @@ O v2 roda como **4 systemd `--user` services** isolados (via home-manager, não 
 - **Mixins** — `mixins/` deduplicação: WelcomeMixin, FeedMixin, LiturgyMixin, AdminMainMixin, AdminLiturgyMixin
 - **Template Method** — `BaseScraper.safe_fetch()` com fallback automático
 - **Async/await** — Kurigram (Client), redis.asyncio, httpx (scrapers), APScheduler
-- **Job-based scheduling** — Worker executa 2 jobs via APScheduler CronTrigger (FeedJob + LiturgyJob); o healthcheck virou processo separado (`watchdog.py`), não um 3º job do APScheduler
+- **Job-based scheduling** — Worker executa 3 jobs via APScheduler CronTrigger (FeedJob main + FeedJob liturgy, ambos a cada 5min, + LiturgyJob às 7am); o healthcheck é processo separado (`watchdog.py`), não um job do APScheduler
 - **Error classification** — ErrorHandler separa erros permanentes (bot blocked, chat deleted) de transitórios (rate limit, timeout)
 
 ---
@@ -128,7 +128,7 @@ tests/                      # Suíte de testes (pytest)
 
 main.py                     # Entry point: MainBot(MainBotFactory()).run()
 liturgy.py                  # Entry point: LiturgyBot(LiturgyBotFactory()).run()
-worker.py                   # Entry point: APScheduler com 2 jobs (FeedJob + LiturgyJob)
+worker.py                   # Entry point: APScheduler com 3 jobs (FeedJob main + FeedJob liturgy + LiturgyJob)
 watchdog.py                 # Entry point: verifica/reinicia serviços caídos, alerta via Telegram
 
 nix/

@@ -48,6 +48,24 @@ async def main():
         name="Feed distribution (main)",
     )
 
+    # Feed job for liturgy bot (RSS distribution)
+    liturgy_feed_job = FeedJob(
+        LiturgyDatabase(int(config("DB_LD", default="1"))),
+        config("DEV_TOKEN_LD")
+    )
+    liturgy_feed_job_lock = asyncio.Lock()
+
+    async def run_liturgy_feed_job() -> None:
+        async with liturgy_feed_job_lock:
+            await liturgy_feed_job.run()
+
+    scheduler.add_job(
+        run_liturgy_feed_job,
+        CronTrigger(minute="*/5"),  # Every 5 minutes
+        id="feed_job_liturgy",
+        name="Feed distribution (liturgy)",
+    )
+
     # Daily liturgy job at 7 AM in America/Belem timezone
     scrapers = [
         LiturgiaScraper(),
@@ -73,7 +91,10 @@ async def main():
     )
 
     scheduler.start()
-    logger.info("Scheduler started with 2 jobs: FeedJob (5min) + LiturgyJob (7am)")
+    logger.info(
+        "Scheduler started with 3 jobs: FeedJob main (5min) + "
+        "FeedJob liturgy (5min) + LiturgyJob (7am)"
+    )
 
     stop_event = asyncio.Event()
 
@@ -93,6 +114,8 @@ async def main():
     # any in-flight run (and its Redis metadata write) has actually
     # completed before we shut the scheduler down.
     async with feed_job_lock:
+        pass
+    async with liturgy_feed_job_lock:
         pass
     async with liturgy_job_lock:
         pass

@@ -65,8 +65,8 @@ Dois bots Telegram especializados em automação para comunidades católicas bra
 | **Watchdog** | `watchdog.py` | Verifica e reinicia serviços caídos, avisa via Telegram | 15min |
 
 **Banco de dados:**
-- **Redis DB 0:** MainBot + FeedJob (grupos, URLs, metadados)
-- **Redis DB 1:** LiturgyBot + LiturgyJob (assinaturas, cache, áudio)
+- **Redis DB 0:** MainBot + FeedJob (grupos, URLs RSS, metadados)
+- **Redis DB 1:** LiturgyBot + FeedJob (URLs RSS) + LiturgyJob (assinaturas, cache, áudio)
 
 **Padrões de design:**
 - Abstract Factory (bots + databases)

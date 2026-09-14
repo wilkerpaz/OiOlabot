@@ -118,14 +118,14 @@ Reutilizar o `file_id` evita re-upload do mesmo arquivo MP3.
 
 ---
 
-### `user_url:{user_id}:chat_id:{chat_id}:^{url}^` — Hash (não funcional no v2 atual)
-Mesmo schema do DB 0. No v1, o DB 1 também suportava assinaturas RSS via `feed_ltd_bot.py`
-(hoje em `legacy/`). No v2, `mixins/feed.py` (FeedMixin) é reaproveitado pelo LiturgyBot e chama
-`self.db.add_url_subscription()`, `get_chat_urls()`, `remove_url_for_chat()` — mas
-`util/database/liturgy_db.py` (LiturgyDatabase) **não implementa esses métodos**. Ou seja,
-`/addurl`, `/listurl` e `/removeurl` no bot de liturgia hoje resultam em `AttributeError`
-em vez de gravar esta chave. Confirmar com o time se isso é uma lacuna a corrigir ou uma
-funcionalidade que deveria ser removida do LiturgyBot.
+### `user_url:{user_id}:chat_id:{chat_id}:^{url}^` — Hash
+Mesmo schema do DB 0. `mixins/feed.py` (FeedMixin) é reaproveitado pelo LiturgyBot, e
+`util/database/liturgy_db.py` (LiturgyDatabase) implementa os mesmos métodos de assinatura
+de URL que `MainDatabase` (`add_url_subscription`, `get_chat_urls`, `remove_url_for_chat`,
+`get_urls_activated`, `get_urls_deactivated`, `activate_all_urls`, `get_chats_for_url`,
+`update_url_metadata`, `get_url_metadata`, `deactivate_url_for_chat`) — corrigido em 2026-09-13
+(estava faltando, causava `AttributeError` em `/addurl`/`/listurl`/`/removeurl` no bot de liturgia).
+`worker.py` roda um `FeedJob` dedicado pra este banco (`feed_job_liturgy`), igual ao do DB 0.
 
 ---
 
@@ -158,9 +158,9 @@ Mesmo schema do DB 0.
 
 ## Notas do v2 (atualizado 2026-09-13)
 
-1. O schema de chaves **não é 100% compatível** com o v1: o hash `group:{chat_id}` perdeu os
-   campos `chat_id` e `chat_title` (ver nota acima), e as assinaturas RSS no DB 1 não funcionam
-   hoje (ver nota na seção `user_url` do DB 1). Fora isso, os padrões de chave permaneceram os mesmos.
+1. O schema de chaves **quase idêntico ao v1**: a única diferença real é o hash `group:{chat_id}`,
+   que perdeu os campos `chat_id` e `chat_title` (ver nota acima). As assinaturas RSS no DB 1
+   (`user_url:...`) usam exatamente o mesmo schema do DB 0, agora implementado nos dois bancos.
 2. `BaseDatabase._find()` encapsula o SCAN iterativo — preservado no v2 (`util/database/base.py`).
 3. O delimitador `^` nas URLs é uma convenção do projeto; mantido no v2.
 4. `decode_responses=True` em todos os clientes Redis — todas as leituras retornam `str`. Confirmado
