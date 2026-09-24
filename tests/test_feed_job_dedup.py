@@ -41,8 +41,12 @@ class FakeDB:
     async def get_chats_for_url(self, url):
         return [{"chat_id": 1, "chat_name": "Grupo"}]
 
-    async def update_url_metadata(self, url, last_update, last_url):
-        self.meta = {"last_update": last_update, "last_url": last_url}
+    async def update_url_metadata(self, url, last_update, last_url, last_urls=None):
+        self.meta = {
+            "last_update": last_update,
+            "last_url": last_url,
+            "last_urls": "\n".join(last_urls or [last_url]),
+        }
         return True
 
 
@@ -114,6 +118,52 @@ async def test_after_first_sync_all_new_entries_sent_oldest_first(feed):
         "https://example.com/3", "https://example.com/4", "https://example.com/5",
     ]
     assert db.meta["last_url"] == "https://example.com/5"
+
+
+def same_time(*names, day=10):
+    """Entries sharing one timestamp, in feed order (newest first)."""
+    return [
+        {
+            "title": name,
+            "link": f"https://example.com/{name}",
+            "published": f"2026-09-{day:02d} 10:00:00+00:00",
+        }
+        for name in names
+    ]
+
+
+async def test_same_date_entries_all_sent_once(feed):
+    db = FakeDB()
+    job = FeedJob(db, "TOKEN12345678")
+    feed["entries"] = make_entries(1)
+    await run_cycle(job, feed)
+
+    feed["entries"] = same_time("b", "a")
+    assert sorted(await run_cycle(job, feed)) == ["https://example.com/a", "https://example.com/b"]
+    for _ in range(3):
+        assert await run_cycle(job, feed) == []
+
+
+async def test_new_entry_with_same_date_as_last_update_is_sent(feed):
+    db = FakeDB()
+    job = FeedJob(db, "TOKEN12345678")
+    feed["entries"] = same_time("a")
+    await run_cycle(job, feed)
+
+    feed["entries"] = same_time("b", "a")
+    assert await run_cycle(job, feed) == ["https://example.com/b"]
+    assert await run_cycle(job, feed) == []
+
+
+async def test_legacy_metadata_without_last_urls(feed):
+    """Records written before last_urls existed fall back to last_url."""
+    db = FakeDB()
+    db.meta = {"last_update": "2026-09-10 10:00:00+00:00", "last_url": "https://example.com/a"}
+    job = FeedJob(db, "TOKEN12345678")
+
+    feed["entries"] = same_time("b", "a")
+    assert await run_cycle(job, feed) == ["https://example.com/b"]
+    assert await run_cycle(job, feed) == []
 
 
 async def test_failed_send_keeps_metadata_for_retry(feed):

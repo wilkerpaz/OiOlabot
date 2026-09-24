@@ -45,6 +45,9 @@ class FeedJob:
             metadata = await self.db.get_url_metadata(url)
             last_update_str = metadata.get("last_update") if metadata else None
             last_url = metadata.get("last_url") if metadata else None
+            # URLs already sent with date == last_update (older records only have last_url)
+            last_urls_str = metadata.get("last_urls") if metadata else None
+            sent_at_last_update = set(filter(None, (last_urls_str or last_url or "").split("\n")))
 
             # Parse the feed (get 4 latest entries)
             entries = await FeedHandler.parse_feed(url, entries=4)
@@ -88,9 +91,12 @@ class FeedJob:
                     logger.debug(f"Skipping entry with missing URL")
                     continue
 
-                # Validate: skip if date <= last_update
-                if last_update and entry_date <= last_update:
-                    logger.debug(f"Entry date {entry_date} <= last_update {last_update}, skipping")
+                # Validate: skip if older than last_update, or same date and already sent
+                if last_update and entry_date < last_update:
+                    logger.debug(f"Entry date {entry_date} < last_update {last_update}, skipping")
+                    continue
+                if last_update and entry_date == last_update and entry_url in sent_at_last_update:
+                    logger.debug(f"Entry {entry_url} already sent at {last_update}, skipping")
                     continue
 
                 # Validate: skip if URL same as last_url
@@ -106,7 +112,13 @@ class FeedJob:
 
                 # Update metadata if at least one send succeeded
                 if success_count > 0:
-                    await self.db.update_url_metadata(url, str(entry_date), entry_url)
+                    if last_update and entry_date == last_update:
+                        sent_at_last_update.add(entry_url)
+                    else:
+                        sent_at_last_update = {entry_url}
+                    await self.db.update_url_metadata(
+                        url, str(entry_date), entry_url, sorted(sent_at_last_update)
+                    )
                     last_update = entry_date
                     last_url = entry_url
                     logger.info(f"Sent entry {entry_url} to {success_count} chat(s), updated metadata")

@@ -47,7 +47,8 @@ Metadados de um feed RSS registrado.
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | `last_update` | str | datetime com tz do último item entregue |
-| `last_url` | str | URL do último item entregue |
+| `last_url` | str | URL do último item entregue (vazio = feed nunca entregou nada → primeira sincronização envia só o item mais recente) |
+| `last_urls` | str | URLs já entregues com data igual a `last_update`, separadas por `\n` — evita reenviar itens com o mesmo horário. Registros antigos sem esse campo usam `last_url` |
 
 **Exemplo de chave:** `url:^https://feeds.exemplo.com/rss^`
 

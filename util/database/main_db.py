@@ -165,12 +165,22 @@ class MainDatabase(BaseDatabase):
 
         return chats
 
-    async def update_url_metadata(self, url: str, last_update: str, last_url: str) -> bool:
-        """Update URL metadata (last_update, last_url)."""
+    async def update_url_metadata(
+        self, url: str, last_update: str, last_url: str, last_urls: list[str] | None = None
+    ) -> bool:
+        """Update URL metadata (last_update, last_url, last_urls).
+
+        last_urls holds every URL already sent with date == last_update
+        (newline-separated), so same-timestamp entries aren't resent.
+        """
         key = f"url:^{url}^"
         result = await self.redis.hset(
             key,
-            mapping={"last_update": last_update, "last_url": last_url}
+            mapping={
+                "last_update": last_update,
+                "last_url": last_url,
+                "last_urls": "\n".join(last_urls or [last_url]),
+            }
         )
         return result is not None
 
