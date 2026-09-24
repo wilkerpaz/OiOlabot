@@ -55,6 +55,11 @@ class FeedJob:
             # FeedHandler already returns entries oldest to newest; don't reverse
             # again, or metadata ends on the oldest entry and newer ones resend.
 
+            # First sync (nothing sent yet): only send the latest entry to avoid spam
+            if not last_url:
+                logger.info(f"First sync for {url}: sending only latest entry")
+                entries = entries[-1:]
+
             # Get subscribed chats
             chats = await self.db.get_chats_for_url(url)
             if not chats:

@@ -77,8 +77,7 @@ async def test_each_entry_sent_once_across_cycles(feed):
     job = FeedJob(db, "TOKEN12345678")
     feed["entries"] = make_entries(1, 2, 3, 4)
 
-    first = await run_cycle(job, feed)
-    assert first == [f"https://example.com/{d}" for d in (1, 2, 3, 4)]  # oldest -> newest
+    assert await run_cycle(job, feed) == ["https://example.com/4"]
     assert db.meta["last_url"] == "https://example.com/4"
 
     for _ in range(4):
@@ -94,6 +93,27 @@ async def test_only_new_entry_sent_when_feed_updates(feed):
     feed["entries"] = make_entries(2, 3, 4, 5)
     assert await run_cycle(job, feed) == ["https://example.com/5"]
     assert await run_cycle(job, feed) == []
+
+
+async def test_first_sync_sends_only_latest_entry(feed):
+    db = FakeDB()
+    job = FeedJob(db, "TOKEN12345678")
+    feed["entries"] = make_entries(1, 2, 3, 4)
+
+    assert await run_cycle(job, feed) == ["https://example.com/4"]
+
+
+async def test_after_first_sync_all_new_entries_sent_oldest_first(feed):
+    db = FakeDB()
+    job = FeedJob(db, "TOKEN12345678")
+    feed["entries"] = make_entries(1, 2)
+    await run_cycle(job, feed)
+
+    feed["entries"] = make_entries(2, 3, 4, 5)
+    assert await run_cycle(job, feed) == [
+        "https://example.com/3", "https://example.com/4", "https://example.com/5",
+    ]
+    assert db.meta["last_url"] == "https://example.com/5"
 
 
 async def test_failed_send_keeps_metadata_for_retry(feed):
