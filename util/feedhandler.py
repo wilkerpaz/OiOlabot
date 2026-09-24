@@ -1,5 +1,6 @@
 import asyncio
 import feedparser
+import httpx
 from feedparser import exceptions
 import re
 import logging
@@ -8,11 +9,26 @@ from util.datehandler import DateHandler
 
 logger = logging.getLogger(__name__)
 
+# feedparser has no timeout: a server that accepts the connection and never
+# answers would hang the feed loop forever. Download with httpx instead.
+FEED_TIMEOUT_SECONDS = 20
+
 
 class FeedHandler:
 
     @staticmethod
-    async def parse_feed(url: str, entries: int = 4, modified=None):
+    def _fetch(url: str):
+        """Download and parse a feed, bounded by FEED_TIMEOUT_SECONDS."""
+        with httpx.Client(
+            timeout=FEED_TIMEOUT_SECONDS,
+            follow_redirects=True,
+            headers={"User-Agent": feedparser.USER_AGENT},
+        ) as client:
+            response = client.get(url)
+        return feedparser.parse(response.content, response_headers=dict(response.headers))
+
+    @staticmethod
+    async def parse_feed(url: str, entries: int = 4):
         """
         Asynchronously parse a feed URL. Uses asyncio.to_thread to avoid
         blocking the event loop with feedparser (which is sync).
@@ -20,15 +36,15 @@ class FeedHandler:
         Returns a list containing the most recent entries (up to `entries`).
         """
         return await asyncio.to_thread(
-            FeedHandler._parse_feed_sync, url, entries, modified
+            FeedHandler._parse_feed_sync, url, entries
         )
 
     @staticmethod
-    def _parse_feed_sync(url: str, entries: int = 4, modified=None):
+    def _parse_feed_sync(url: str, entries: int = 4):
         """Synchronous implementation of feed parsing."""
         try:
             if 1 <= entries <= 10:
-                feeds = feedparser.parse(url, modified=modified).entries[:entries]
+                feeds = FeedHandler._fetch(url).entries[:entries]
                 if url == 'http://feeds.feedburner.com/evangelhoddia/dia':
                     for f in feeds:
                         f['published'] = f['id'][:10] + ' ' + '06:00:00'
@@ -41,7 +57,7 @@ class FeedHandler:
                     feed.reverse()
                     return feed
             else:
-                feed = feedparser.parse(url, modified=modified).entries[:4]
+                feed = FeedHandler._fetch(url).entries[:4]
                 feed.reverse()
                 return feed
         except Exception as e:
@@ -74,7 +90,7 @@ class FeedHandler:
             return False
 
         try:
-            feed = feedparser.parse(url)
+            feed = FeedHandler._fetch(url)
 
             if not feed.entries:
                 return False

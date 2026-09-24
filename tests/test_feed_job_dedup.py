@@ -6,9 +6,9 @@ tests cover the dedup logic of both.
 
 from unittest.mock import patch
 
-import feedparser
 import pytest
 
+from util.feedhandler import FeedHandler
 from worker.feed_job import FeedJob
 
 FEED_URL = "https://example.com/feed"
@@ -65,7 +65,7 @@ def feed():
             state["sent"].append(entry["link"])
         return state["send_ok"]
 
-    with patch.object(feedparser, "parse", lambda *a, **k: FakeParsed(state["entries"])), \
+    with patch.object(FeedHandler, "_fetch", lambda url: FakeParsed(state["entries"])), \
          patch.object(FeedJob, "_send_entry_to_chat", fake_send):
         yield state
 
