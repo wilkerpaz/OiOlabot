@@ -232,6 +232,9 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 # Validar imports
 .venv/bin/python -c "from factories.main_factory import MainBotFactory; print('OK')"
+# Para rodar os testes (pytest + pytest-asyncio; pytest.ini usa asyncio_mode = auto)
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/python -m pytest
 ```
 
 ### Adicionar feature
