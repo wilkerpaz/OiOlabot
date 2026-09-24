@@ -170,7 +170,7 @@ O `oiolabot-watchdog` roda via `systemd.user.timers` (a cada 15min) — não é 
 **Requisitos:**
 1. `.env` com: `API_ID`, `API_HASH`, `DEV_TOKEN`, `DEV_TOKEN_LD`, `DB`, `DB_LD`, `TZ`, `LOG`, `ADMIN_CHAT_ID` (pro watchdog)
 2. Redis rodando: `redis-server` em localhost:6379, **bind restrito a `127.0.0.1`/`::1`** (`protected-mode yes`) — nunca `0.0.0.0`
-3. Python 3.11+ num único venv (`.venv`) com: `kurigram`, `httpx`, `redis[asyncio]`, `feedparser`, `beautifulsoup4`, `apscheduler`
+3. Python 3.11+ num único venv em `~/.venv` (na home, **não** `~/OiOlabot/.venv` — é o que os `ExecStart` dos serviços usam) com: `kurigram`, `httpx`, `redis[asyncio]`, `feedparser`, `beautifulsoup4`, `apscheduler`
 4. `loginctl enable-linger <usuário>` — sem isso, os serviços `--user` não sobrevivem sem sessão logada
 
 ---
