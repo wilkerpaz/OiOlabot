@@ -52,8 +52,8 @@ class FeedJob:
                 logger.debug(f"No entries found for {url}")
                 return
 
-            # Reverse to process from oldest to newest (ascending date order)
-            entries = list(reversed(entries))
+            # FeedHandler already returns entries oldest to newest; don't reverse
+            # again, or metadata ends on the oldest entry and newer ones resend.
 
             # Get subscribed chats
             chats = await self.db.get_chats_for_url(url)
@@ -102,6 +102,8 @@ class FeedJob:
                 # Update metadata if at least one send succeeded
                 if success_count > 0:
                     await self.db.update_url_metadata(url, str(entry_date), entry_url)
+                    last_update = entry_date
+                    last_url = entry_url
                     logger.info(f"Sent entry {entry_url} to {success_count} chat(s), updated metadata")
                 else:
                     logger.warning(f"Failed to send entry {entry_url} to any chat")
