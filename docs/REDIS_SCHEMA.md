@@ -49,6 +49,13 @@ Metadados de um feed RSS registrado.
 | `last_update` | str | datetime com tz do último item entregue |
 | `last_url` | str | URL do último item entregue (vazio = feed nunca entregou nada → primeira sincronização envia só o item mais recente) |
 | `last_urls` | str | URLs já entregues com data igual a `last_update`, separadas por `\n` — evita reenviar itens com o mesmo horário. Registros antigos sem esse campo usam `last_url` |
+| `last_check` | str | datetime da última tentativa de buscar o feed (gravado pelo FeedJob a cada ciclo) |
+| `last_ok` | str | datetime da última busca que retornou entradas |
+| `last_error` | str | motivo da última falha: `timeout`, `HTTP <código>`, `vazio`, `erro de conexão` ou nome da exceção. Removido no próximo sucesso |
+| `error_since` | str | datetime da primeira falha da sequência atual. Removido no próximo sucesso |
+| `error_count` | int | falhas seguidas. Removido no próximo sucesso |
+
+Os campos de saúde (`last_check` … `error_count`) alimentam o comando de admin `/feederrors [dias]`.
 
 **Exemplo de chave:** `url:^https://feeds.exemplo.com/rss^`
 

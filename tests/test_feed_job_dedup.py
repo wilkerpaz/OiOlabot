@@ -41,6 +41,9 @@ class FakeDB:
     async def get_chats_for_url(self, url):
         return [{"chat_id": 1, "chat_name": "Grupo"}]
 
+    async def record_feed_health(self, url, error):
+        pass
+
     async def update_url_metadata(self, url, last_update, last_url, last_urls=None):
         self.meta = {
             "last_update": last_update,

@@ -191,6 +191,26 @@ class MainDatabase(BaseDatabase):
             return None
         return await self.redis.hgetall(key)
 
+    async def record_feed_health(self, url: str, error: str | None) -> None:
+        """Record the result of a feed fetch in the URL metadata.
+
+        On success: last_ok = now, and the error fields are cleared.
+        On failure: last_error = error, error_count += 1, and error_since
+        keeps the time of the first failure in the current streak.
+        """
+        key = f"url:^{url}^"
+        now = str(DateHandler.get_datetime_now())
+        async with self.redis.pipeline(transaction=True) as pipe:
+            pipe.hset(key, "last_check", now)
+            if error is None:
+                pipe.hset(key, "last_ok", now)
+                pipe.hdel(key, "last_error", "error_since", "error_count")
+            else:
+                pipe.hset(key, "last_error", error)
+                pipe.hsetnx(key, "error_since", now)
+                pipe.hincrby(key, "error_count", 1)
+            await pipe.execute()
+
     async def remove_group_config(self, chat_id: int) -> bool:
         """Remove group configuration."""
         key = f"group:{chat_id}"

@@ -97,8 +97,8 @@ mixins/
   ├── welcome.py           # Handlers: /welcome, /goodbye, /lock, /unlock, /quiet, /unquiet, /start, /stop, /chatinfo
   ├── feed.py              # Handlers: /addurl, /listurl, /removeurl
   ├── liturgy.py           # Handlers: /hoje, /ontem, /amanha, /dominical, /santododia, /calendario
-  ├── admin_main.py        # Admin handlers: /owner, /admin, /backup, /deactivatedurl, /activateallurl, /allurl
-  └── admin_liturgy.py     # Admin handlers: /admin, /senddailyliturgy, /sendaudioliturgy, /activateallliturgy, /deactivated, /activated, /userinfoliturgy, /userliturgydeactivated
+  ├── admin_main.py        # Admin handlers: /owner, /admin, /backup, /deactivatedurl, /activateallurl, /allurl, /feederrors
+  └── admin_liturgy.py     # Admin handlers: /admin, /senddailyliturgy, /sendaudioliturgy, /activateallliturgy, /deactivated, /activated, /userinfoliturgy, /userliturgydeactivated, /feederrors
 
 util/
   ├── database/
@@ -111,7 +111,8 @@ util/
   │   ├── homilia.py       # HomiliaScraper (homilia do dia, 302 redirects suportados)
   │   ├── audio.py         # AudioScraper (MP3 homilia, cache, iframe semântico)
   │   └── santo.py         # SantoScraper (santo do dia, 302 redirects suportados)
-  ├── feedhandler.py       # FeedHandler (asyncio.to_thread para sync feedparser)
+  ├── feedhandler.py       # FeedHandler (httpx com timeout de 20s + feedparser via asyncio.to_thread; parse_feed_with_status devolve o motivo da falha)
+  ├── feed_health.py       # Relatório do /feederrors (feeds com erro ou parados há mais de N dias)
   ├── datehandler.py       # DateHandler (timezone-aware, copiado de v1)
   └── calendar.py          # Inline calendar (copiado de v1, compatível com Kurigram)
 
@@ -213,11 +214,11 @@ O `oiolabot-watchdog` roda via `systemd.user.timers` (a cada 15min) — não é 
 
 ### MainBot (DB=0)
 - Públicos: `/help`, `/welcome`, `/goodbye`, `/lock`, `/unlock`, `/quiet`, `/unquiet`, `/addurl`, `/listurl`, `/removeurl`, `/start`, `/stop`, `/me`
-- Admin (12): `/owner`, `/admin`, `/addadmin`, `/removeadmin`, `/listadmin`, `/backup`, `/deactivatedurl`, `/activateallurl`, `/allurl`, `/activated`, `/deactivated`, `/userinfo`
+- Admin (15): `/owner`, `/admin`, `/addadmin`, `/removeadmin`, `/listadmin`, `/backup`, `/deactivatedurl`, `/activateallurl`, `/allurl`, `/activated`, `/deactivated`, `/userinfo`, `/getkey`, `/removekey`, `/feederrors [dias]`
 
 ### LiturgyBot (DB=1)
 - Públicos: `/help`, `/start`, `/stop`, `/hoje`, `/ontem`, `/amanha`, `/dominical`, `/santododia`, `/calendario`, `/welcome`, `/goodbye`, `/addurl`, `/listurl`, `/removeurl`
-- Admin (11): `/admin`, `/addadmin`, `/removeadmin`, `/listadmin`, `/senddailyliturgy`, `/sendaudioliturgy`, `/activateallliturgy`, `/deactivated`, `/activated`, `/userinfoliturgy`, `/userliturgydeactivated`
+- Admin (14): `/admin`, `/addadmin`, `/removeadmin`, `/listadmin`, `/senddailyliturgy`, `/sendaudioliturgy`, `/activateallliturgy`, `/deactivated`, `/activated`, `/userinfoliturgy`, `/userliturgydeactivated`, `/getkey`, `/removekey`, `/feederrors [dias]`
 
 **Nota:** Admin handlers não aparecem em `/help`. **Não são IDs hardcoded** — a lista de admins vive no Redis (chave `admins`, gerenciada via `MainDatabase.add_admin/remove_admin/list_admins/is_admin` em `util/database/main_db.py`) e é administrada dinamicamente com `/addadmin`, `/removeadmin`, `/listadmin`.
 

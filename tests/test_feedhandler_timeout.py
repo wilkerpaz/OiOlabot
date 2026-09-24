@@ -86,3 +86,59 @@ async def test_parse_feed_reads_rss(rss_server):
     entries = await FeedHandler.parse_feed(rss_server, entries=4)
     assert [e["link"] for e in entries] == ["https://example.com/b", "https://example.com/a"]
     assert await FeedHandler.is_parsable(rss_server) is True
+
+
+@pytest.fixture
+def http_server():
+    """Serves a fixed (status, body) set by the test."""
+    reply = {"status": 200, "body": RSS}
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(reply["status"])
+            self.send_header("Content-Type", "application/rss+xml")
+            self.end_headers()
+            self.wfile.write(reply["body"])
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    t = threading.Thread(target=server.serve_forever, daemon=True)
+    t.start()
+    yield f"http://127.0.0.1:{server.server_port}/feed", reply
+    server.shutdown()
+    server.server_close()
+
+
+async def test_status_ok(http_server):
+    url, _ = http_server
+    entries, error = await FeedHandler.parse_feed_with_status(url)
+    assert error is None
+    assert len(entries) == 2
+
+
+async def test_status_http_error(http_server):
+    url, reply = http_server
+    reply["status"], reply["body"] = 404, b"not found"
+    assert await FeedHandler.parse_feed_with_status(url) == ([], "HTTP 404")
+
+
+async def test_status_empty_feed(http_server):
+    url, reply = http_server
+    reply["body"] = b'<?xml version="1.0"?><rss version="2.0"><channel><title>t</title></channel></rss>'
+    assert await FeedHandler.parse_feed_with_status(url) == ([], "vazio")
+
+
+async def test_status_timeout(silent_server):
+    with patch.object(feedhandler, "FEED_TIMEOUT_SECONDS", 0.5):
+        assert await FeedHandler.parse_feed_with_status(silent_server) == ([], "timeout")
+
+
+async def test_status_connection_refused():
+    sock = socket.socket()
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    sock.close()  # nothing listening on this port now
+    entries, error = await FeedHandler.parse_feed_with_status(f"http://127.0.0.1:{port}/feed")
+    assert (entries, error) == ([], "erro de conexão")

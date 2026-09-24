@@ -25,6 +25,7 @@ class FeedHandler:
             headers={"User-Agent": feedparser.USER_AGENT},
         ) as client:
             response = client.get(url)
+        response.raise_for_status()
         return feedparser.parse(response.content, response_headers=dict(response.headers))
 
     @staticmethod
@@ -35,34 +36,51 @@ class FeedHandler:
 
         Returns a list containing the most recent entries (up to `entries`).
         """
+        feed, _ = await FeedHandler.parse_feed_with_status(url, entries)
+        return feed
+
+    @staticmethod
+    async def parse_feed_with_status(url: str, entries: int = 4) -> tuple[list, str | None]:
+        """Like parse_feed, but also return why the fetch failed.
+
+        The error is None on success, or a short reason: "timeout",
+        "HTTP 404", "vazio" (valid response without entries), "erro de
+        conexão" or the exception class name.
+        """
         return await asyncio.to_thread(
             FeedHandler._parse_feed_sync, url, entries
         )
 
     @staticmethod
-    def _parse_feed_sync(url: str, entries: int = 4):
+    def _parse_feed_sync(url: str, entries: int = 4) -> tuple[list, str | None]:
         """Synchronous implementation of feed parsing."""
+        if not 1 <= entries <= 10:
+            entries = 4
         try:
-            if 1 <= entries <= 10:
-                feeds = FeedHandler._fetch(url).entries[:entries]
-                if url == 'http://feeds.feedburner.com/evangelhoddia/dia':
-                    for f in feeds:
-                        f['published'] = f['id'][:10] + ' ' + '06:00:00'
-                        f['link'] = f['link'] + f['id'][:10]
-                        f['daily_liturgy'] = f['summary']
-                    feeds.reverse()
-                    return feeds
-                else:
-                    feed = feeds[:entries]
-                    feed.reverse()
-                    return feed
-            else:
-                feed = FeedHandler._fetch(url).entries[:4]
-                feed.reverse()
-                return feed
+            feed = FeedHandler._fetch(url).entries[:entries]
+        except httpx.TimeoutException as e:
+            logger.error(f"Error parsing feed {url}: {e}")
+            return [], "timeout"
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Error parsing feed {url}: {e}")
+            return [], f"HTTP {e.response.status_code}"
+        except httpx.TransportError as e:
+            logger.error(f"Error parsing feed {url}: {e}")
+            return [], "erro de conexão"
         except Exception as e:
             logger.error(f"Error parsing feed {url}: {e}")
-            return []
+            return [], type(e).__name__
+
+        if not feed:
+            return [], "vazio"
+
+        if url == 'http://feeds.feedburner.com/evangelhoddia/dia':
+            for f in feed:
+                f['published'] = f['id'][:10] + ' ' + '06:00:00'
+                f['link'] = f['link'] + f['id'][:10]
+                f['daily_liturgy'] = f['summary']
+        feed.reverse()
+        return feed, None
 
     @staticmethod
     def format_url_string(string: str) -> str:

@@ -29,6 +29,7 @@ Dois bots Telegram especializados em automação para comunidades católicas bra
 - `/deactivatedurl`, `/activateallurl`, `/allurl` — Gerenciar feeds globalmente
 - `/activated`, `/deactivated` — Contagem de feeds ativos/inativos
 - `/userinfo` — Chats com feeds ativos
+- `/feederrors [dias]` — Feeds com erro de acesso ou sem posts novos há mais de N dias (padrão 60)
 
 ### LiturgyBot (DB 1 — Liturgia Diária)
 
@@ -48,6 +49,7 @@ Dois bots Telegram especializados em automação para comunidades católicas bra
 - `/sendaudioliturgy` — Enviar áudio da homilia para todos
 - `/activateallliturgy` — Ativar todas as assinaturas
 - `/deactivated`, `/activated` — Listar usuários (in)ativos
+- `/feederrors [dias]` — Feeds com erro de acesso ou sem posts novos há mais de N dias (padrão 60)
 - `/userinfoliturgy` — Detalhes das assinaturas
 - `/userliturgydeactivated` — Chaves desativadas
 

@@ -8,6 +8,7 @@ from pyrogram.handlers import MessageHandler
 from pyrogram.types import Document
 
 from util.datehandler import DateHandler
+from util.feed_health import DEFAULT_STALE_DAYS, build_feed_errors_report
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,9 @@ class AdminMainMixin:
         self.client.add_handler(
             MessageHandler(self._on_removekey, filters.command("removekey"))
         )
+        self.client.add_handler(
+            MessageHandler(self._on_feederrors, filters.command("feederrors"))
+        )
 
     async def _on_owner(self, client, message):
         """Set current user as group owner."""
@@ -82,6 +86,32 @@ class AdminMainMixin:
         """Check if user is an admin."""
         return await self.db.is_admin(user_id)
 
+    async def _on_feederrors(self, client, message):
+        """List feeds with fetch errors or no new post in N days (admin only).
+
+        Usage: /feederrors [dias] — default 60 days.
+        """
+        if not await self._check_admin(message.from_user.id):
+            await message.reply("❌ Você não é administrador.")
+            return
+
+        args = message.command[1:]
+        stale_days = DEFAULT_STALE_DAYS
+        if args:
+            if not args[0].isdigit() or int(args[0]) < 1:
+                await message.reply(
+                    f"Uso: /feederrors [dias]\nPadrão: {DEFAULT_STALE_DAYS} dias sem posts novos."
+                )
+                return
+            stale_days = int(args[0])
+
+        try:
+            for text in await build_feed_errors_report(self.db, stale_days):
+                await message.reply(text)
+        except Exception as e:
+            logger.error(f"Error in _on_feederrors: {e}", exc_info=True)
+            await message.reply(f"❌ Erro ao verificar feeds: {type(e).__name__}")
+
     async def _on_admin(self, client, message):
         """Send admin commands list (admin only)."""
         if not await self._check_admin(message.from_user.id):
@@ -97,7 +127,8 @@ class AdminMainMixin:
             "/activated — Mostra número de feeds ativos\n"
             "/deactivated — Mostra número de feeds inativos\n"
             "/deactivatedurl — Lista feeds desativados\n"
-            "/activateallurl — Ativa todos os feeds\n\n"
+            "/activateallurl — Ativa todos os feeds\n"
+            "/feederrors [dias] — Feeds com erro ou sem posts há mais de N dias (padrão 60)\n\n"
             "**Banco de Dados:**\n"
             "/backup — Faz backup do banco de dados\n"
             "/getkey <padrão> — Busca chaves no Redis\n"

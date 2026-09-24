@@ -50,7 +50,8 @@ class FeedJob:
             sent_at_last_update = set(filter(None, (last_urls_str or last_url or "").split("\n")))
 
             # Parse the feed (get 4 latest entries)
-            entries = await FeedHandler.parse_feed(url, entries=4)
+            entries, fetch_error = await FeedHandler.parse_feed_with_status(url, entries=4)
+            await self.db.record_feed_health(url, fetch_error)
             if not entries:
                 logger.debug(f"No entries found for {url}")
                 return
