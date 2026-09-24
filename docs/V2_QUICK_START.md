@@ -10,7 +10,7 @@ bots/               BaseBot with mixins (WelcomeMixin, FeedMixin, LiturgyMixin)
 mixins/             Shared handlers: /welcome, /addurl, /hoje, /lock, etc.
 util/database/      Redis async operations for MainDatabase (DB 0) and LiturgyDatabase (DB 1)
 util/scrapers/      Content fetchers (LiturgiaScraper, HomiliaScraper, SantoScraper)
-worker/             Background jobs (FeedJob every 5min, LiturgyJob at 7am)
+worker/             Background jobs (FeedJob loop with 10s pause between cycles, LiturgyJob at 7am)
 legacy/             v1 (Pyrogram-original) — archived, does not run in production
 tests/              pytest suite
 main.py, liturgy.py, worker.py, watchdog.py    Entry points for 4 systemd --user services

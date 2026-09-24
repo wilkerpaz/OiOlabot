@@ -162,8 +162,8 @@ Only Kurigram + `requirements.txt` are needed — v1's extra dependencies (real 
 ```bash
 # In terminal 1
 ~/.venv/bin/python worker.py
-# Should log: "Starting Worker..." and "Scheduler started with 3 jobs: FeedJob main (5min) + FeedJob liturgy (5min) + LiturgyJob (7am)"
-# Should log FeedJob runs every 5 minutes
+# Should log: "Starting Worker..." and "Worker started: FeedJob main + FeedJob liturgy (loop, 10s pause between cycles) + LiturgyJob (7am)"
+# FeedJob runs continuously, pausing 10s after each cycle ends
 # At 7 AM (America/Belem time), should log LiturgyJob run
 ```
 

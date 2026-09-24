@@ -61,7 +61,7 @@ Dois bots Telegram especializados em automação para comunidades católicas bra
 |----------|---------|--------|------|
 | **MainBot** | `main.py` | Handlers de grupo + RSS | - |
 | **LiturgyBot** | `liturgy.py` | Handlers de liturgia | - |
-| **Worker** | `worker.py` | Distribuição de feeds + liturgia diária | 5min + 7am |
+| **Worker** | `worker.py` | Distribuição de feeds + liturgia diária | Loop (10s entre ciclos) + 7am |
 | **Watchdog** | `watchdog.py` | Verifica e reinicia serviços caídos, avisa via Telegram | 15min |
 
 **Banco de dados:**
@@ -211,7 +211,8 @@ util/
 
 worker/
 ├── error_handler.py    # Classificação de erros Telegram
-├── feed_job.py         # Distribuição de feeds (5min)
+├── feed_job.py         # Distribuição de feeds
+├── feed_loop.py        # Loop do FeedJob (10s de pausa entre ciclos)
 └── liturgy_job.py      # Envio de liturgia (7am)
 
 legacy/                 # v1 (Pyrogram original) — arquivado, não roda em produção

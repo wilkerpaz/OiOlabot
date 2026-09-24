@@ -14,6 +14,7 @@ from util.scrapers.liturgia import LiturgiaScraper
 from util.scrapers.homilia import HomiliaScraper
 from util.scrapers.santo import SantoScraper
 from worker.feed_job import FeedJob
+from worker.feed_loop import FEED_PAUSE_SECONDS, run_feed_loop
 from worker.liturgy_job import LiturgyJob
 
 logging.basicConfig(
@@ -29,41 +30,17 @@ async def main():
     logger.info("Starting Worker...")
 
     scheduler = AsyncIOScheduler()
+    stop_event = asyncio.Event()
 
-    # Feed job for main bot (RSS distribution)
+    # Feed jobs (RSS distribution) for main and liturgy bots: continuous
+    # loops, not cron, so the pause counts from the end of each cycle.
     main_feed_job = FeedJob(
         MainDatabase(int(config("DB", default="0"))),
         config("DEV_TOKEN")
     )
-    feed_job_lock = asyncio.Lock()
-
-    async def run_feed_job() -> None:
-        async with feed_job_lock:
-            await main_feed_job.run()
-
-    scheduler.add_job(
-        run_feed_job,
-        CronTrigger(minute="*/5"),  # Every 5 minutes
-        id="feed_job_main",
-        name="Feed distribution (main)",
-    )
-
-    # Feed job for liturgy bot (RSS distribution)
     liturgy_feed_job = FeedJob(
         LiturgyDatabase(int(config("DB_LD", default="1"))),
         config("DEV_TOKEN_LD")
-    )
-    liturgy_feed_job_lock = asyncio.Lock()
-
-    async def run_liturgy_feed_job() -> None:
-        async with liturgy_feed_job_lock:
-            await liturgy_feed_job.run()
-
-    scheduler.add_job(
-        run_liturgy_feed_job,
-        CronTrigger(minute="*/5"),  # Every 5 minutes
-        id="feed_job_liturgy",
-        name="Feed distribution (liturgy)",
     )
 
     # Daily liturgy job at 7 AM in America/Belem timezone
@@ -91,12 +68,14 @@ async def main():
     )
 
     scheduler.start()
+    feed_loops = [
+        asyncio.create_task(run_feed_loop(main_feed_job, stop_event)),
+        asyncio.create_task(run_feed_loop(liturgy_feed_job, stop_event)),
+    ]
     logger.info(
-        "Scheduler started with 3 jobs: FeedJob main (5min) + "
-        "FeedJob liturgy (5min) + LiturgyJob (7am)"
+        f"Worker started: FeedJob main + FeedJob liturgy (loop, {FEED_PAUSE_SECONDS}s "
+        "pause between cycles) + LiturgyJob (7am)"
     )
-
-    stop_event = asyncio.Event()
 
     def _handle_shutdown_signal() -> None:
         logger.info("Shutdown signal received")
@@ -112,11 +91,9 @@ async def main():
     # AsyncIOScheduler's executor does not honor shutdown(wait=True) — it
     # cancels running jobs outright. Acquiring each job's lock blocks until
     # any in-flight run (and its Redis metadata write) has actually
-    # completed before we shut the scheduler down.
-    async with feed_job_lock:
-        pass
-    async with liturgy_feed_job_lock:
-        pass
+    # completed before we shut the scheduler down. Feed loops exit on their
+    # own after finishing the current cycle.
+    await asyncio.gather(*feed_loops)
     async with liturgy_job_lock:
         pass
     scheduler.shutdown(wait=False)

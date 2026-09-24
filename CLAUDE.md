@@ -50,7 +50,7 @@ O v2 roda como **4 systemd `--user` services** isolados (via home-manager, não 
 |----------|-------------|------------------|------|
 | **MainBot** | `main.py` | Boas-vindas/despedidas (grupos) + RSS handlers | - |
 | **LiturgyBot** | `liturgy.py` | Handlers para comandos de liturgia | - |
-| **Worker** | `worker.py` | Distribuição de feeds + liturgia diária | Cada 5min + 7am |
+| **Worker** | `worker.py` | Distribuição de feeds + liturgia diária | Loop contínuo (10s de pausa entre ciclos) + 7am |
 | **Watchdog** | `watchdog.py` | Verifica os outros 3 serviços + Redis, reinicia se caído, avisa via Telegram (`ADMIN_CHAT_ID`) | Cada 15min |
 
 **Banco de dados por processo:**
@@ -65,7 +65,7 @@ O v2 roda como **4 systemd `--user` services** isolados (via home-manager, não 
 - **Mixins** — `mixins/` deduplicação: WelcomeMixin, FeedMixin, LiturgyMixin, AdminMainMixin, AdminLiturgyMixin
 - **Template Method** — `BaseScraper.safe_fetch()` com fallback automático
 - **Async/await** — Kurigram (Client), redis.asyncio, httpx (scrapers), APScheduler
-- **Job-based scheduling** — Worker executa 3 jobs via APScheduler CronTrigger (FeedJob main + FeedJob liturgy, ambos a cada 5min, + LiturgyJob às 7am); o healthcheck é processo separado (`watchdog.py`), não um job do APScheduler
+- **Job-based scheduling** — Worker roda FeedJob main + FeedJob liturgy como loops contínuos (`worker/feed_loop.py`, pausa de `FEED_PAUSE_SECONDS` = 10s contada do fim de cada ciclo) e o LiturgyJob via APScheduler CronTrigger às 7am; o healthcheck é processo separado (`watchdog.py`), não um job do APScheduler
 - **Error classification** — ErrorHandler separa erros permanentes (bot blocked, chat deleted) de transitórios (rate limit, timeout)
 
 ---
@@ -117,7 +117,8 @@ util/
 
 worker/
   ├── error_handler.py     # ErrorHandler: classifica respostas Telegram (permanent, transient, unknown)
-  ├── feed_job.py          # FeedJob: distribui feeds RSS (5min), deactiva em erro permanent
+  ├── feed_job.py          # FeedJob: distribui feeds RSS, deactiva em erro permanent
+  ├── feed_loop.py         # run_feed_loop: roda FeedJob em loop com 10s de pausa entre ciclos
   └── liturgy_job.py       # LiturgyJob: envia liturgia diária (7am), deactiva em erro permanent
 
 legacy/                     # v1 (Pyrogram original) — arquivado, NÃO roda em produção
